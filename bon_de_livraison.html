@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bon de Livraison - ERP Génie Civil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes slideIn {
+            0% { transform: translateX(-100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .floating { animation: float 6s ease-in-out infinite; }
+        .slide-in { animation: slideIn 0.8s ease-out; }
+        .loading { animation: pulse 1.5s ease-in-out infinite; }
+        
+        .theme-transition {
+            transition: all 0.3s ease;
+        }
+
+        .fa-spin-custom {
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .bl-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body class="theme-transition min-h-screen bg-gray-50 dark:bg-gray-900">
+    <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-truck text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-gray-900 dark:text-white font-bold text-xl">ECH SAHARA</h1>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">Bon de Livraison</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i id="sunIcon" class="fas fa-sun w-5 h-5 text-gray-600 dark:text-gray-300 hidden dark:block"></i>
+                        <i id="moonIcon" class="fas fa-moon w-5 h-5 text-gray-600 dark:text-gray-300 block dark:hidden"></i>
+                    </button>
+                    
+                    <button id="backToDashboard" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all duration-300">
+                        <i class="fas fa-arrow-left mr-2"></i>Tableau de Bord
+                    </button>
+                    
+                    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Déconnexion
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="loadingState" class="text-center py-12">
+            <i class="fas fa-spinner fa-spin-custom text-green-500 text-6xl"></i>
+            <p class="text-gray-600 dark:text-gray-400 mt-4">Chargement des bons de livraison...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div class="slide-in mb-8">
+                <div class="bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl p-8 text-white shadow-2xl floating">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-3xl font-bold mb-2">Gestion des Bons de Livraison</h2>
+                            <p class="text-white/80">Créez et gérez vos bons de livraison facilement</p>
+                        </div>
+                        <div class="text-6xl opacity-30">
+                            <i class="fas fa-truck"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/20">
+                        <div class="text-center">
+                            <p class="text-white/80 text-sm">Total BL</p>
+                            <p class="text-2xl font-bold text-yellow-300" id="totalBL">0</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-white/80 text-sm">Ce Mois</p>
+                            <p class="text-2xl font-bold text-green-300" id="monthlyBL">0</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-white/80 text-sm">Cette Semaine</p>
+                            <p class="text-2xl font-bold text-blue-300" id="weeklyBL">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slide-in">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-gray-900 dark:text-white text-3xl font-bold">Liste des Bons de Livraison</h2>
+                    <div class="flex space-x-3">
+                        <select id="projectFilter" class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white">
+                            <option value="">Tous les projets</option>
+                        </select>
+                        <button id="refreshBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all duration-300">
+                            <i class="fas fa-sync-alt mr-2"></i>Actualiser
+                        </button>
+                        <button id="historyBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-all duration-300">
+                            <i class="fas fa-history mr-2"></i>Historique
+                        </button>
+                        <button id="newBLBtn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-all duration-300 transform hover:scale-105">
+                            <i class="fas fa-plus mr-2"></i>Nouveau BL
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="blList">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="createBLModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-6xl mx-4 max-h-screen overflow-y-auto">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                <i class="fas fa-plus-circle mr-2 text-green-500"></i>Créer un Bon de Livraison
+            </h3>
+            <form id="createBLForm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fas fa-project-diagram mr-1"></i>Projet *
+                        </label>
+                        <select id="projectSelect" required class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white">
+                            <option value="">Sélectionnez un projet</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fas fa-credit-card mr-1"></i>Méthode de Paiement *
+                        </label>
+                        <select id="paymentMethod" required class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white">
+                            <option value="cash">Espèces</option>
+                            <option value="check">Chèque</option>
+                            <option value="transfer">Virement</option>
+                            <option value="credit">Crédit</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fas fa-map-marker-alt mr-1"></i>Adresse d'Origine *
+                        </label>
+                        <input type="text" id="originAddress" required class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fas fa-map-pin mr-1"></i>Adresse de Destination *
+                        </label>
+                        <input type="text" id="destinationAddress" required class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fas fa-file-alt mr-1"></i>Description
+                        </label>
+                        <textarea id="description" rows="3" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"></textarea>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fas fa-receipt mr-1"></i>Preuve de Paiement
+                        </label>
+                        <input type="file" id="paymentProof" accept="image/*,application/pdf" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white">
+                    </div>
+                </div>
+
+                <div class="border-t pt-6">
+                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        <i class="fas fa-boxes mr-2"></i>Articles
+                    </h4>
+                    <div id="itemsContainer">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
+                            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Produit</label>
+                                    <input type="text" placeholder="Nom du produit" class="item-product w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quantité</label>
+                                    <input type="number" placeholder="Quantité" class="item-quantity w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white" min="1">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prix Unitaire</label>
+                                    <input type="number" placeholder="Prix unitaire" class="item-price w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white" min="0" step="0.01">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total</label>
+                                    <input type="number" placeholder="Total" class="item-total w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 dark:text-white" readonly>
+                                </div>
+                                <div class="flex items-end">
+                                    <button type="button" class="remove-item bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg transition-colors">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" id="addItemBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Ajouter un Article
+                    </button>
+                </div>
+
+                <div class="border-t pt-6 mt-6">
+                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        <i class="fas fa-coins mr-2"></i>Frais Additionnels
+                    </h4>
+                    <div id="chargesContainer">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                                    <input type="text" placeholder="Description du frais" class="charge-description w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Montant</label>
+                                    <input type="number" placeholder="Montant" class="charge-amount w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white" min="0" step="0.01">
+                                </div>
+                                <div class="flex items-end">
+                                    <button type="button" class="remove-charge bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg transition-colors">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" id="addChargeBtn" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Ajouter un Frais
+                    </button>
+                </div>
+
+                <div class="border-t pt-6 mt-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
+                            <i class="fas fa-calculator mr-2"></i>Total: <span id="totalAmount" class="text-green-600 dark:text-green-400">0.00 DA</span>
+                        </h4>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" id="cancelCreateBtn" class="px-6 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
+                        <i class="fas fa-times mr-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-check mr-1"></i>Créer le BL
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="historyModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-6xl mx-4 max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+                    <i class="fas fa-history mr-2 text-orange-500"></i>Historique des Bons de Livraison
+                </h3>
+                <button id="closeHistoryBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="mb-4">
+                <select id="historyProjectFilter" class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white">
+                    <option value="">Tous les projets</option>
+                </select>
+            </div>
+            
+            <div id="historyContent" class="space-y-4">
+            </div>
+        </div>
+    </div>
+
+    <div id="errorToast" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <span id="errorMessage">Une erreur s'est produite</span>
+        </div>
+    </div>
+
+    <div id="successToast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span id="successMessage">Opération réussie</span>
+        </div>
+    </div>
+
+    <script>
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const html = document.documentElement;
+
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        if (currentTheme === 'dark') {
+            html.classList.add('dark');
+        }
+
+        darkModeToggle.addEventListener('click', function() {
+            html.classList.toggle('dark');
+            
+            if (html.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+        let bonLivraisons = [];
+        let projects = [];
+
+        function showError(message) {
+            const errorToast = document.getElementById('errorToast');
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorToast.classList.remove('hidden');
+            setTimeout(() => {
+                errorToast.classList.add('hidden');
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const successToast = document.getElementById('successToast');
+            const successMessage = document.getElementById('successMessage');
+            successMessage.textContent = message;
+            successToast.classList.remove('hidden');
+            setTimeout(() => {
+                successToast.classList.add('hidden');
+            }, 3000);
+        }
+
+        async function makeAuthenticatedRequest(url, options = {}) {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return null;
+            }
+            
+            // Create default headers
+            const defaultHeaders = {
+                'Authorization': `Bearer ${token}`,
+                ...options.headers
+            };
+            
+            // Only add Content-Type if it's not FormData
+            if (!(options.body instanceof FormData)) {
+                defaultHeaders['Content-Type'] = 'application/json';
+            }
+            
+            const requestOptions = {
+                ...options,
+                headers: defaultHeaders
+            };
+            
+            const response = await fetch(url, requestOptions);
+            
+            if (response.status === 401) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+                return null;
+            }
+            
+            return response;
+        }
+
+        function checkAuthentication() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+
+        async function loadProjects() {
+            try {
+                const response = await makeAuthenticatedRequest(`${API_BASE_URL}/gestion/api/projects/`);
+                if (response && response.ok) {
+                    const result = await response.json();
+                    projects = result.results;
+                    populateProjectSelects();
+                }
+            } catch (error) {
+                console.error('Error loading projects:', error);
+            }
+        }
+
+        function populateProjectSelects() {
+            const projectSelect = document.getElementById('projectSelect');
+            const projectFilter = document.getElementById('projectFilter');
+            const historyProjectFilter = document.getElementById('historyProjectFilter');
+            
+            [projectSelect, projectFilter, historyProjectFilter].forEach(select => {
+                const currentValue = select.value;
+                while (select.children.length > 1) {
+                    select.removeChild(select.lastChild);
+                }
+                
+                projects.forEach(project => {
+                    const option = document.createElement('option');
+                    option.value = project.id;
+                    option.textContent = project.name;
+                    select.appendChild(option);
+                });
+                
+                select.value = currentValue;
+            });
+        }
+
+        async function loadBonLivraisons(projectId = null) {
+            try {
+                let url = `${API_BASE_URL}/gestion/api/bon-de-livraison/`;
+                if (projectId) {
+                    url += `?project_id=${projectId}`;
+                }
+                
+                const response = await makeAuthenticatedRequest(url);
+                if (response && response.ok) {
+                    bonLivraisons = await response.json();
+                    updateStats();
+                    renderBonLivraisons();
+                } else {
+                    showError('Erreur lors du chargement des bons de livraison');
+                }
+            } catch (error) {
+                console.error('Error loading bon livraisons:', error);
+                showError('Erreur lors du chargement des bons de livraison');
+            }
+        }
+
+        function updateStats() {
+            const total = bonLivraisons.length;
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const currentWeek = getWeekNumber(new Date());
+            
+            const monthlyCount = bonLivraisons.filter(bl => {
+                const blDate = new Date(bl.created_at);
+                return blDate.getMonth() === currentMonth && blDate.getFullYear() === currentYear;
+            }).length;
+            
+            const weeklyCount = bonLivraisons.filter(bl => {
+                const blDate = new Date(bl.created_at);
+                return getWeekNumber(blDate) === currentWeek && blDate.getFullYear() === currentYear;
+            }).length;
+            
+            document.getElementById('totalBL').textContent = total;
+            document.getElementById('monthlyBL').textContent = monthlyCount;
+            document.getElementById('weeklyBL').textContent = weeklyCount;
+        }
+
+        function getWeekNumber(date) {
+            const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+            const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+            return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+        }
+
+        function renderBonLivraisons() {
+            const blList = document.getElementById('blList');
+            blList.innerHTML = '';
+            
+            // Check if there are no bon de livraisons
+            if (bonLivraisons.length === 0) {
+                blList.innerHTML = `
+                    <div class="flex items-center justify-center min-h-96">
+                        <div class="text-center">
+                            <div class="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-truck text-gray-400 text-3xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Aucun bon de livraison</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-6">Il n'y a pas encore de bons de livraison créés pour ce projet.</p>
+                            <button onclick="document.getElementById('createBLModal').classList.remove('hidden')" 
+                                    class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-plus mr-2"></i>Créer le premier bon de livraison
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            bonLivraisons.forEach(bl => {
+                const blCard = createBLCard(bl);
+                blList.appendChild(blCard);
+            });
+        }
+
+        
+        function createBLCard(bl) {
+            const card = document.createElement('div');
+            card.className = 'bl-card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 transition-all duration-300 shadow-sm hover:shadow-lg';
+            
+            const paymentMethodIcons = {
+                'bank_cheque': 'fas fa-money-check',
+                'bank_virement': 'fas fa-exchange-alt',
+                'poste_baridi': 'fas fa-mobile-alt',
+                'poste_ccp': 'fas fa-university'
+            };
+            
+            const paymentMethodNames = {
+                'bank_cheque': 'Bank - Chèque',
+                'bank_virement': 'Bank - Ordre de Virement',
+                'poste_baridi': 'Poste - Baridi Mob',
+                'poste_ccp': 'Poste - CCP'
+            };
+            
+            // Dynamic button based on PDF status - Made smaller
+            const pdfButton = bl.has_pdf 
+                ? `<button onclick="downloadPDF(${bl.id})" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-1.5 px-2 rounded-md text-xs transition-colors">
+                    <i class="fas fa-download mr-1"></i>
+                    PDF
+                </button>`
+                : `<button onclick="generatePDF(${bl.id})" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-1.5 px-2 rounded-md text-xs transition-colors">
+                    <i class="fas fa-file-pdf mr-1"></i>Générer PDF
+                </button>`;
+            
+            card.innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-truck text-white text-xl"></i>
+                    </div>
+                    <span class="bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300 px-3 py-1 rounded-full text-sm font-medium">
+                        ${bl.bl_number}
+                    </span>
+                </div>
+                
+                <h3 class="text-gray-900 dark:text-white text-xl font-bold mb-2">${bl.project_name}</h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">${bl.description || 'Aucune description'}</p>
+                
+                <div class="space-y-2 text-sm mb-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-map-marker-alt mr-1"></i>Origine:
+                        </span>
+                        <span class="text-gray-900 dark:text-white font-medium">${bl.origin_address}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-map-pin mr-1"></i>Destination:
+                        </span>
+                        <span class="text-gray-900 dark:text-white font-medium">${bl.destination_address}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500 dark:text-gray-400">
+                            <i class="${paymentMethodIcons[bl.payment_method] || 'fas fa-credit-card'} mr-1"></i>Paiement:
+                        </span>
+                        <span class="text-blue-600 dark:text-blue-400">${paymentMethodNames[bl.payment_method] || bl.payment_method}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-calculator mr-1"></i>Montant:
+                        </span>
+                        <span class="text-green-600 dark:text-green-400 font-bold">${bl.total_amount.toFixed(2)} DA</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-boxes mr-1"></i>Articles:
+                        </span>
+                        <span class="text-gray-900 dark:text-white">${bl.items.length}</span>
+                    </div>
+                </div>
+                
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3">
+                        <span>Créé le ${new Date(bl.created_at).toLocaleDateString('fr-FR')}</span>
+                        <span>Par : ${bl.created_by.username ? bl.created_by.username : 'Inconnu'}</span>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button onclick="viewBLDetails(${bl.id})" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-1.5 px-2 rounded-md text-xs transition-colors">
+                            <i class="fas fa-eye mr-1"></i>Voir
+                        </button>
+                        ${pdfButton}
+                        <button onclick="deleteBL(${bl.id})" class="bg-red-500 hover:bg-red-600 text-white py-1.5 px-2 rounded-md text-xs transition-colors">
+                            <i class="fas fa-trash mr-1"></i>Supprimer
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        async function viewBLDetails(blId) {
+            const bl = bonLivraisons.find(b => b.id === blId);
+            if (!bl) {
+                showError('Bon de livraison non trouvé');
+                return;
+            }
+            
+            const paymentMethodNames = {
+                'bank_cheque': 'Bank - Chèque',
+                'bank_virement': 'Bank - Ordre de Virement',
+                'poste_baridi': 'Poste - Baridi Mob',
+                'poste_ccp': 'Poste - CCP'
+            };
+            
+            let itemsHtml = '';
+            bl.items.forEach(item => {
+                itemsHtml += `
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <td class="py-2 px-4 text-gray-900 dark:text-white">${item.product_name}</td>
+                        <td class="py-2 px-4 text-gray-900 dark:text-white">${item.quantity}</td>
+                        <td class="py-2 px-4 text-gray-900 dark:text-white">${item.unit_price.toFixed(2)} DA</td>
+                        <td class="py-2 px-4 text-gray-900 dark:text-white font-medium">${item.total_price.toFixed(2)} DA</td>
+                    </tr>
+                `;
+            });
+
+            let chargesHtml = '';
+            bl.additional_charges.forEach(charge => {
+                chargesHtml += `
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <td class="py-2 px-4 text-gray-900 dark:text-white">${charge.description}</td>
+                        <td class="py-2 px-4 text-gray-900 dark:text-white font-medium">${charge.amount.toFixed(2)} DA</td>
+                    </tr>
+                `;
+            });
+
+            const paymentProofHtml = bl.payment_proof ? `
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preuve de paiement:</label>
+                    <a href="${API_BASE_URL}${bl.payment_proof}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">
+                        <i class="fas fa-external-link-alt mr-1"></i>Voir le fichier
+                    </a>
+                </div>
+            ` : '';
+
+            Swal.fire({
+                title: `Bon de Livraison - ${bl.bl_number}`,
+                html: `
+                    <div class="text-left">
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <strong>Projet:</strong> ${bl.project_name}<br>
+                                <strong>Origine:</strong> ${bl.origin_address}<br>
+                                <strong>Destination:</strong> ${bl.destination_address}<br>
+                                <strong>Paiement:</strong> ${paymentMethodNames[bl.payment_method] || bl.payment_method}<br>
+                                <strong>Créé le:</strong> ${new Date(bl.created_at).toLocaleDateString('fr-FR')}
+                            </div>
+                            <div>
+                                <strong>Montant Total:</strong> <span class="text-green-600">${bl.total_amount.toFixed(2)} DA</span><br>
+                                <strong>Créé par:</strong> ${bl.created_by ? bl.created_by.username : 'Inconnu'}<br>
+                                <strong>Description:</strong> ${bl.description || 'Aucune description'}
+                            </div>
+                        </div>
+                        
+                        ${bl.items.length > 0 ? `
+                            <div class="mb-6">
+                                <h4 class="font-semibold mb-2">Articles:</h4>
+                                <table class="w-full border border-gray-200 dark:border-gray-700">
+                                    <thead class="bg-gray-50 dark:bg-gray-700">
+                                        <tr>
+                                            <th class="py-2 px-4 text-left text-gray-900 dark:text-white">Produit</th>
+                                            <th class="py-2 px-4 text-left text-gray-900 dark:text-white">Quantité</th>
+                                            <th class="py-2 px-4 text-left text-gray-900 dark:text-white">Prix Unit.</th>
+                                            <th class="py-2 px-4 text-left text-gray-900 dark:text-white">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${itemsHtml}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : ''}
+                        
+                        ${bl.additional_charges.length > 0 ? `
+                            <div class="mb-6">
+                                <h4 class="font-semibold mb-2">Frais Additionnels:</h4>
+                                <table class="w-full border border-gray-200 dark:border-gray-700">
+                                    <thead class="bg-gray-50 dark:bg-gray-700">
+                                        <tr>
+                                            <th class="py-2 px-4 text-left text-gray-900 dark:text-white">Description</th>
+                                            <th class="py-2 px-4 text-left text-gray-900 dark:text-white">Montant</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${chargesHtml}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : ''}
+                        
+                        ${paymentProofHtml}
+                    </div>
+                `,
+                width: '800px',
+                showCloseButton: true,
+                showConfirmButton: false,
+                customClass: {
+                    popup: 'dark:bg-gray-800 dark:text-white'
+                }
+            });
+        }
+
+        async function generatePDF(blId) {
+            const button = event.target.closest('button');
+            const originalHTML = button.innerHTML;
+            
+            try {
+                // Show loading state
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Génération...';
+                
+                const response = await makeAuthenticatedRequest(`${API_BASE_URL}/gestion/api/bon-de-livraison/${blId}/generate-pdf/`, {
+                    method: 'POST'
+                });
+                
+                if (response && response.ok) {
+                    const result = await response.json();
+                    showSuccess('PDF généré avec succès');
+
+                    await loadBonLivraisons(document.getElementById('projectFilter').value);
+                } else {
+                    const error = await response.json();
+                    showError(error.error || 'Erreur lors de la génération du PDF');
+                }
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                showError('Erreur lors de la génération du PDF');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalHTML;
+            }
+            }
+
+        async function downloadPDF(blId) {
+            const button = event.target.closest('button');
+            const originalHTML = button.innerHTML;
+            
+            try {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Téléchargement...';
+                
+                const response = await makeAuthenticatedRequest(`${API_BASE_URL}/gestion/api/bon-de-livraison/${blId}/download-pdf/`);
+                
+                if (response && response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `bon_livraison_${blId}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    showSuccess('PDF téléchargé avec succès');
+                } else {
+                    const error = await response.json();
+                    showError(error.error || 'Erreur lors du téléchargement du PDF');
+                }
+            } catch (error) {
+                console.error('Error downloading PDF:', error);
+                showError('Erreur lors du téléchargement du PDF');
+            } finally {
+                // Restore button state
+                button.disabled = false;
+                button.innerHTML = originalHTML;
+            }
+            }
+        function addItemRow() {
+            const container = document.getElementById('itemsContainer');
+            const itemRow = document.createElement('div');
+            itemRow.className = 'bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4';
+            itemRow.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Produit</label>
+                        <input type="text" placeholder="Nom du produit" class="item-product w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quantité</label>
+                        <input type="number" placeholder="Quantité" class="item-quantity w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white" min="1">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prix Unitaire</label>
+                        <input type="number" placeholder="Prix unitaire" class="item-price w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white" min="0" step="0.01">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total</label>
+                        <input type="number" placeholder="Total" class="item-total w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 dark:text-white" readonly>
+                    </div>
+                    <div class="flex items-end">
+                        <button type="button" class="remove-item bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg transition-colors">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(itemRow);
+            attachItemEventListeners(itemRow);
+        }
+
+        function addChargeRow() {
+            const container = document.getElementById('chargesContainer');
+            const chargeRow = document.createElement('div');
+            chargeRow.className = 'bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4';
+            chargeRow.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                        <input type="text" placeholder="Description du frais" class="charge-description w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Montant</label>
+                        <input type="number" placeholder="Montant" class="charge-amount w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white" min="0" step="0.01">
+                    </div>
+                    <div class="flex items-end">
+                        <button type="button" class="remove-charge bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg transition-colors">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(chargeRow);
+            attachChargeEventListeners(chargeRow);
+        }
+
+        function attachItemEventListeners(itemRow) {
+            const quantityInput = itemRow.querySelector('.item-quantity');
+            const priceInput = itemRow.querySelector('.item-price');
+            const totalInput = itemRow.querySelector('.item-total');
+            const removeBtn = itemRow.querySelector('.remove-item');
+
+            function updateItemTotal() {
+                const quantity = parseFloat(quantityInput.value) || 0;
+                const price = parseFloat(priceInput.value) || 0;
+                const total = quantity * price;
+                totalInput.value = total.toFixed(2);
+                updateGrandTotal();
+            }
+
+            quantityInput.addEventListener('input', updateItemTotal);
+            priceInput.addEventListener('input', updateItemTotal);
+            
+            removeBtn.addEventListener('click', () => {
+                itemRow.remove();
+                updateGrandTotal();
+            });
+        }
+
+        function attachChargeEventListeners(chargeRow) {
+            const amountInput = chargeRow.querySelector('.charge-amount');
+            const removeBtn = chargeRow.querySelector('.remove-charge');
+
+            amountInput.addEventListener('input', updateGrandTotal);
+            
+            removeBtn.addEventListener('click', () => {
+                chargeRow.remove();
+                updateGrandTotal();
+            });
+        }
+
+        function updateGrandTotal() {
+            let total = 0;
+            
+            document.querySelectorAll('.item-total').forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            
+            document.querySelectorAll('.charge-amount').forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            
+            document.getElementById('totalAmount').textContent = total.toFixed(2) + ' DA';
+        }
+
+        async function createBonLivraison(formData) {
+            try {
+                const response = await makeAuthenticatedRequest(`${API_BASE_URL}/gestion/api/bon-de-livraison/create/`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response && response.ok) {
+                    const result = await response.json();
+                    showSuccess('Bon de livraison créé avec succès');
+                    document.getElementById('createBLModal').classList.add('hidden');
+                    await loadBonLivraisons(document.getElementById('projectFilter').value);
+                    document.getElementById('createBLForm').reset();
+                } else {
+                    const error = await response.json();
+                    showError(error.error || 'Erreur lors de la création du bon de livraison');
+                }
+            } catch (error) {
+                console.error('Error creating bon livraison:', error);
+                showError('Erreur lors de la création du bon de livraison');
+            }
+        }
+        async function deleteBL(blId) {
+    const result = await Swal.fire({
+        title: 'Êtes-vous sûr?',
+        text: 'Cette action supprimera définitivement le bon de livraison!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Oui, supprimer!',
+        cancelButtonText: 'Annuler',
+        customClass: {
+            popup: 'dark:bg-gray-800 dark:text-white'
+        }
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const token = localStorage.getItem('access_token');
+            
+            const response = await fetch(`${API_BASE_URL}/gestion/api/bon-de-livraison/${blId}/delete/`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 200) {
+                showSuccess('Bon de livraison supprimé avec succès');
+                // Refresh the bon livraisons list
+                await loadBonLivraisons(document.getElementById('projectFilter').value);
+            } else {
+                showError('Erreur lors de la suppression du bon de livraison');
+            }
+        } catch (error) {
+            console.error('Error deleting bon de livraison:', error);
+            showError('Erreur lors de la suppression du bon de livraison');
+        }
+    }
+}
+        async function loadHistory(projectId = null) {
+            try {
+                let url = `${API_BASE_URL}/gestion/api/bon-de-livraison/bl-history/`;
+                if (projectId) {
+                    url += `?project_id=${projectId}`;
+                }
+                
+                const response = await makeAuthenticatedRequest(url);
+                if (response && response.ok) {
+                    const result = await response.json();
+                    renderHistory(result.results);
+                } else {
+                    showError('Erreur lors du chargement de l\'historique');
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+                showError('Erreur lors du chargement de l\'historique');
+            }
+        }
+
+        function renderHistory(historyData) {
+            const historyContent = document.getElementById('historyContent');
+            historyContent.innerHTML = '';
+            
+            if (historyData.length === 0) {
+                historyContent.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-history text-gray-400 text-4xl mb-4"></i>
+                        <p class="text-gray-600 dark:text-gray-400">Aucun historique disponible</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            historyData.forEach(entry => {
+                const actionIcons = {
+                    'created': 'fas fa-plus-circle text-green-500',
+                    'item_added': 'fas fa-box text-blue-500',
+                    'charge_added': 'fas fa-coins text-purple-500',
+                    'pdf_generated': 'fas fa-file-pdf text-red-500',
+                    'pdf_downloaded': 'fas fa-download text-orange-500'
+                };
+                
+                const historyItem = document.createElement('div');
+                historyItem.className = 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4';
+                historyItem.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-3">
+                            <i class="${actionIcons[entry.action] || 'fas fa-circle text-gray-400'}"></i>
+                            <div>
+                                <h4 class="text-gray-900 dark:text-white font-medium">${entry.action_display}</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">${entry.description}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">${new Date(entry.created_at).toLocaleDateString('fr-FR')}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">${entry.user ? entry.user.full_name : 'Inconnu'}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-600 dark:text-gray-400">BL: ${entry.bl_number}</span>
+                        <span class="text-gray-600 dark:text-gray-400">Projet: ${entry.project ? entry.project.name : 'Inconnu'}</span>
+                    </div>
+                `;
+                historyContent.appendChild(historyItem);
+            });
+        }
+
+        function initializeEventListeners() {
+            document.getElementById('newBLBtn').addEventListener('click', () => {
+                document.getElementById('createBLModal').classList.remove('hidden');
+            });
+            
+            document.getElementById('cancelCreateBtn').addEventListener('click', () => {
+                document.getElementById('createBLModal').classList.add('hidden');
+            });
+            
+            document.getElementById('historyBtn').addEventListener('click', () => {
+                document.getElementById('historyModal').classList.remove('hidden');
+                loadHistory();
+            });
+            
+            document.getElementById('closeHistoryBtn').addEventListener('click', () => {
+                document.getElementById('historyModal').classList.add('hidden');
+            });
+            
+            document.getElementById('refreshBtn').addEventListener('click', () => {
+                loadBonLivraisons(document.getElementById('projectFilter').value);
+            });
+            
+            document.getElementById('projectFilter').addEventListener('change', (e) => {
+                loadBonLivraisons(e.target.value);
+            });
+            
+            document.getElementById('historyProjectFilter').addEventListener('change', (e) => {
+                loadHistory(e.target.value);
+            });
+            
+            document.getElementById('addItemBtn').addEventListener('click', addItemRow);
+            document.getElementById('addChargeBtn').addEventListener('click', addChargeRow);
+            
+            document.getElementById('createBLForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const formData = new FormData();
+                formData.append('project_id', document.getElementById('projectSelect').value);
+                formData.append('origin_address', document.getElementById('originAddress').value);
+                formData.append('destination_address', document.getElementById('destinationAddress').value);
+                formData.append('description', document.getElementById('description').value);
+                formData.append('payment_method', document.getElementById('paymentMethod').value);
+                
+                const paymentProof = document.getElementById('paymentProof').files[0];
+                if (paymentProof) {
+                    formData.append('payment_proof', paymentProof);
+                }
+                
+                const items = [];
+                document.querySelectorAll('#itemsContainer > div').forEach(itemRow => {
+                    const product = itemRow.querySelector('.item-product').value;
+                    const quantity = itemRow.querySelector('.item-quantity').value;
+                    const price = itemRow.querySelector('.item-price').value;
+                    const total = itemRow.querySelector('.item-total').value;
+                    
+                    if (product && quantity && price) {
+                        items.push({
+                            product_id: 1,
+                            quantity: parseInt(quantity),
+                            unit_price: parseFloat(price),
+                            total_price: parseFloat(total)
+                        });
+                    }
+                });
+                
+                const charges = [];
+                document.querySelectorAll('#chargesContainer > div').forEach(chargeRow => {
+                    const description = chargeRow.querySelector('.charge-description').value;
+                    const amount = chargeRow.querySelector('.charge-amount').value;
+                    
+                    if (description && amount) {
+                        charges.push({
+                            description: description,
+                            amount: parseFloat(amount)
+                        });
+                    }
+                });
+                
+                formData.append('items', JSON.stringify(items));
+                formData.append('additional_charges', JSON.stringify(charges));
+                
+                await createBonLivraison(formData);
+            });
+            
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            });
+            
+            document.getElementById('backToDashboard').addEventListener('click', () => {
+                window.location.href = 'dashboard.html';
+            });
+            
+            document.querySelectorAll('#itemsContainer > div').forEach(itemRow => {
+                attachItemEventListeners(itemRow);
+            });
+            
+            document.querySelectorAll('#chargesContainer > div').forEach(chargeRow => {
+                attachChargeEventListeners(chargeRow);
+            });
+        }
+
+        async function initializePage() {
+            if (!checkAuthentication()) {
+                return;
+            }
+            
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('mainContent').classList.add('hidden');
+            
+            try {
+                await loadProjects();
+                await loadBonLivraisons();
+                
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+                
+                initializeEventListeners();
+            } catch (error) {
+                console.error('Error initializing page:', error);
+                showError('Erreur lors du chargement de la page');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initializePage);
+
+    </script>
+    
+</body>

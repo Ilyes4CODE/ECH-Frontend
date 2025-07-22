@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bon de Commande - ERP Génie Civil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes slideIn {
+            0% { transform: translateX(-100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .floating { animation: float 6s ease-in-out infinite; }
+        .slide-in { animation: slideIn 0.8s ease-out; }
+        .loading { animation: pulse 1.5s ease-in-out infinite; }
+        
+        .theme-transition {
+            transition: all 0.3s ease;
+        }
+
+        .fa-spin-custom {
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .bc-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body class="theme-transition min-h-screen bg-gray-50 dark:bg-gray-900">
+    <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-shopping-cart text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-gray-900 dark:text-white font-bold text-xl">ECH SAHARA</h1>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">Bon de Commande</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i id="sunIcon" class="fas fa-sun w-5 h-5 text-gray-600 dark:text-gray-300 hidden dark:block"></i>
+                        <i id="moonIcon" class="fas fa-moon w-5 h-5 text-gray-600 dark:text-gray-300 block dark:hidden"></i>
+                    </button>
+                    
+                    <button id="backToDashboard" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all duration-300">
+                        <i class="fas fa-arrow-left mr-2"></i>Tableau de Bord
+                    </button>
+                    
+                    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Déconnexion
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="loadingState" class="text-center py-12">
+            <i class="fas fa-spinner fa-spin-custom text-blue-500 text-6xl"></i>
+            <p class="text-gray-600 dark:text-gray-400 mt-4">Chargement des bons de commande...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div class="slide-in mb-8">
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white shadow-2xl floating">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-3xl font-bold mb-2">Gestion des Bons de Commande</h2>
+                            <p class="text-white/80">Créez et gérez vos bons de commande facilement</p>
+                        </div>
+                        <div class="text-6xl opacity-30">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/20">
+                        <div class="text-center">
+                            <p class="text-white/80 text-sm">Total BC</p>
+                            <p class="text-2xl font-bold text-yellow-300" id="totalBC">0</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-white/80 text-sm">Ce Mois</p>
+                            <p class="text-2xl font-bold text-green-300" id="monthlyBC">0</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-white/80 text-sm">Cette Semaine</p>
+                            <p class="text-2xl font-bold text-blue-300" id="weeklyBC">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slide-in">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-gray-900 dark:text-white text-3xl font-bold">Liste des Bons de Commande</h2>
+                    <div class="flex space-x-3">
+                        <button id="refreshBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all duration-300">
+                            <i class="fas fa-sync-alt mr-2"></i>Actualiser
+                        </button>
+                        <button id="newBCBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-all duration-300 transform hover:scale-105">
+                            <i class="fas fa-plus mr-2"></i>Nouveau BC
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="bcList">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="createBCModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-6xl mx-4 max-h-screen overflow-y-auto">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                <i class="fas fa-plus-circle mr-2 text-blue-500"></i>Créer un Bon de Commande
+            </h3>
+            <form id="createBCForm">
+                <div class="border-t pt-6">
+                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        <i class="fas fa-boxes mr-2"></i>Articles
+                    </h4>
+                    <div id="itemsContainer">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
+                            <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nom du Produit</label>
+                                    <input type="text" placeholder="Nom du produit" class="item-product-name w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-2-800 dark:text-white" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-ism font-medium text-gray-700 dark:text-gray-300 mb-2">Désignation</label>
+                                    <input type="text" placeholder="Désignation" class="item-designation w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quantité</label>
+                                    <input type="number" placeholder="Quantité" class="item-quantity w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white" min="1" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prix Unitaire</label>
+                                    <input type="number" placeholder="Prix unitaire" class="item-price w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white" min="0" step="0.01" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total</label>
+                                    <input type="number" placeholder="Total" class="item-total w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 dark:text-white" readonly>
+                                </div>
+                                <div class="flex items-end">
+                                    <button type="button" class="remove-item bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg transition-colors">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" id="addItemBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Ajouter un Article
+                    </button>
+                </div>
+
+                <div class="border-t pt-6 mt-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
+                            <i class="fas fa-calculator mr-2"></i>Total HT: <span id="totalAmount" class="text-blue-600 dark:text-blue-400">0.00 DA</span>
+                        </h4>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" id="cancelCreateBtn" class="px-6 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
+                        <i class="fas fa-times mr-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-check mr-1"></i>Créer le BC
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl mx-4 max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+                    <i class="fas fa-info-circle mr-2 text-blue-500"></i>Détails du Bon de Commande
+                </h3>
+                <button id="closeDetailsBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="detailsContent" class="space-y-4">
+            </div>
+        </div>
+    </div>
+
+    <div id="errorToast" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <span id="errorMessage">Une erreur s'est produite</span>
+        </div>
+    </div>
+
+    <div id="successToast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span id="successMessage">Opération réussie</span>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000/gestion/api';
+        let darkMode = localStorage.getItem('darkMode') === 'true';
+        let bonCommandes = [];
+
+        if (darkMode) {
+            document.documentElement.classList.add('dark');
+        }
+
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const loadingState = document.getElementById('loadingState');
+        const mainContent = document.getElementById('mainContent');
+        const bcList = document.getElementById('bcList');
+        const createBCModal = document.getElementById('createBCModal');
+        const detailsModal = document.getElementById('detailsModal');
+        const errorToast = document.getElementById('errorToast');
+        const successToast = document.getElementById('successToast');
+        const totalBC = document.getElementById('totalBC');
+        const monthlyBC = document.getElementById('monthlyBC');
+        const weeklyBC = document.getElementById('weeklyBC');
+
+        darkModeToggle.addEventListener('click', () => {
+            darkMode = !darkMode;
+            localStorage.setItem('darkMode', darkMode);
+            document.documentElement.classList.toggle('dark', darkMode);
+        });
+
+        document.getElementById('newBCBtn').addEventListener('click', () => {
+            createBCModal.classList.remove('hidden');
+        });
+
+        document.getElementById('cancelCreateBtn').addEventListener('click', () => {
+            createBCModal.classList.add('hidden');
+        });
+
+        document.getElementById('closeDetailsBtn').addEventListener('click', () => {
+            detailsModal.classList.add('hidden');
+        });
+
+        document.getElementById('refreshBtn').addEventListener('click', loadBonCommandes);
+
+        document.getElementById('addItemBtn').addEventListener('click', () => {
+    const itemsContainer = document.getElementById('itemsContainer');
+    const itemDiv = document.createElement('div');
+    itemDiv.className = 'bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4';
+    itemDiv.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nom du Produit</label>
+                <input type="text" placeholder="Nom du produit" class="item-product-name w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Désignation</label>
+                <input type="text" placeholder="Désignation" class="item-designation w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quantité</label>
+                <input type="number" placeholder="Quantité" class="item-quantity w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white" min="1" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prix Unitaire</label>
+                <input type="number" placeholder="Prix unitaire" class="item-price w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white" min="0" step="0.01" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total</label>
+                <input type="number" placeholder="Total" class="item-total w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 dark:text-white" readonly>
+            </div>
+            <div class="flex items-end">
+                <button type="button" class="remove-item bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg transition-colors">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    itemsContainer.appendChild(itemDiv);
+    addItemEventListeners(itemDiv);
+});
+
+        function addItemEventListeners(itemDiv) {
+            const removeBtn = itemDiv.querySelector('.remove-item');
+            const quantityInput = itemDiv.querySelector('.item-quantity');
+            const priceInput = itemDiv.querySelector('.item-price');
+            const totalInput = itemDiv.querySelector('.item-total');
+
+            removeBtn.addEventListener('click', () => {
+                itemDiv.remove();
+                updateTotalAmount();
+            });
+
+            quantityInput.addEventListener('input', updateItemTotal);
+            priceInput.addEventListener('input', updateItemTotal);
+
+            function updateItemTotal() {
+                const quantity = parseFloat(quantityInput.value) || 0;
+                const price = parseFloat(priceInput.value) || 0;
+                const total = quantity * price;
+                totalInput.value = total.toFixed(2);
+                updateTotalAmount();
+            }
+        }
+
+        function updateTotalAmount() {
+            const totalInputs = document.querySelectorAll('.item-total');
+            let total = 0;
+            totalInputs.forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            document.getElementById('totalAmount').textContent = total.toFixed(2) + ' DA';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialItems = document.querySelectorAll('#itemsContainer > div');
+            initialItems.forEach(addItemEventListeners);
+        });
+
+        document.getElementById('createBCForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const items = [];
+    const itemDivs = document.querySelectorAll('#itemsContainer > div');
+    
+    itemDivs.forEach(itemDiv => {
+        const productName = itemDiv.querySelector('.item-product-name').value.trim();
+        const designation = itemDiv.querySelector('.item-designation').value.trim();
+        const quantity = itemDiv.querySelector('.item-quantity').value;
+        const prixUnitaire = itemDiv.querySelector('.item-price').value;
+        
+        if (productName && quantity && prixUnitaire) {
+            const itemData = {
+                product_name: productName,
+                quantity: parseInt(quantity),
+                prix_unitaire: parseFloat(prixUnitaire)
+            };
+            
+            // Add designation if provided, otherwise it will use product_name as default
+            if (designation) {
+                itemData.designation = designation;
+            }
+            
+            items.push(itemData);
+        }
+    });
+
+    if (items.length === 0) {
+        showError('Veuillez ajouter au moins un article');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/bon-de-commande/create/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}` // Fixed: changed from 'token' to 'access_token'
+            },
+            body: JSON.stringify({ items })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            showSuccess('Bon de commande créé avec succès');
+            createBCModal.classList.add('hidden');
+            document.getElementById('createBCForm').reset();
+            // Clear the items container except for the first item
+            const itemsContainer = document.getElementById('itemsContainer');
+            const firstItem = itemsContainer.querySelector('div');
+            itemsContainer.innerHTML = '';
+            if (firstItem) {
+                // Reset the first item
+                firstItem.querySelectorAll('input').forEach(input => {
+                    if (input.type === 'number') {
+                        input.value = '';
+                    } else {
+                        input.value = '';
+                    }
+                });
+                itemsContainer.appendChild(firstItem);
+            }
+            loadBonCommandes();
+        } else {
+            const error = await response.json();
+            showError(error.error || 'Erreur lors de la création');
+        }
+    } catch (error) {
+        console.error('Error creating bon de commande:', error);
+        showError('Erreur de connexion');
+    }
+});
+
+        async function loadBonCommandes() {
+            try {
+                loadingState.classList.remove('hidden');
+                mainContent.classList.add('hidden');
+
+                const response = await fetch(`${API_BASE_URL}/bon-de-commande/`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    bonCommandes = await response.json();
+                    displayBonCommandes();
+                    updateStatistics();
+                } else {
+                    showError('Erreur lors du chargement des bons de commande');
+                }
+            } catch (error) {
+                showError('Erreur de connexion');
+            } finally {
+                loadingState.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+            }
+        }
+
+        function displayBonCommandes() {
+    bcList.innerHTML = '';
+    
+    // Check if there are no bon de commandes
+    if (bonCommandes.length === 0) {
+        const emptyStateDiv = document.createElement('div');
+        emptyStateDiv.className = 'text-center py-12';
+        emptyStateDiv.innerHTML = `
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 max-w-md mx-auto">
+                <div class="text-gray-400 dark:text-gray-500 mb-4">
+                    <i class="fas fa-file-invoice text-6xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                    Aucun bon de commande
+                </h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">
+                    Vous n'avez pas encore créé de bon de commande. Commencez par créer votre premier bon de commande.
+                </p>
+                <button onclick="document.getElementById('newBCBtn').click()" 
+                        class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors inline-flex items-center">
+                    <i class="fas fa-plus mr-2"></i>
+                    Créer un bon de commande
+                </button>
+            </div>
+        `;
+        bcList.appendChild(emptyStateDiv);
+        return;
+    }
+    
+    // Display bon de commandes normally if they exist
+    bonCommandes.forEach(bc => {
+        const card = document.createElement('div');
+        card.className = 'bc-card bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 transition-all duration-300 hover:shadow-xl';
+        
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">BC N° ${bc.bc_number}</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                        <i class="fas fa-calendar mr-1"></i>
+                        ${new Date(bc.date_commande).toLocaleDateString()}
+                    </p>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="viewDetails(${bc.id})" class="text-blue-500 hover:text-blue-700 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button onclick="generatePDF(${bc.id})" class="text-green-500 hover:text-green-700 p-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900">
+                        <i class="fas fa-file-pdf"></i>
+                    </button>
+                    <button onclick="deleteBonCommande(${bc.id})" class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-600 dark:text-gray-400">Total HT:</span>
+                    <span class="font-semibold text-green-600 dark:text-green-400">${bc.total_ht} DA</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600 dark:text-gray-400">Articles:</span>
+                    <span class="font-semibold">${bc.items_count}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600 dark:text-gray-400">Créé par:</span>
+                    <span class="font-semibold">${bc.created_by || 'N/A'}</span>
+                </div>
+            </div>
+        `;
+        
+        bcList.appendChild(card);
+    });
+}
+
+        function updateStatistics() {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+            const monthlyCount = bonCommandes.filter(bc => {
+                const bcDate = new Date(bc.created_at);
+                return bcDate.getMonth() === currentMonth && bcDate.getFullYear() === currentYear;
+            }).length;
+
+            const weeklyCount = bonCommandes.filter(bc => {
+                const bcDate = new Date(bc.created_at);
+                return bcDate >= oneWeekAgo;
+            }).length;
+
+            totalBC.textContent = bonCommandes.length;
+            monthlyBC.textContent = monthlyCount;
+            weeklyBC.textContent = weeklyCount;
+        }
+        function validateForm() {
+            const items = [];
+            const itemDivs = document.querySelectorAll('#itemsContainer > div');
+            const errors = [];
+            
+            itemDivs.forEach((itemDiv, index) => {
+                const productName = itemDiv.querySelector('.item-product-name')?.value.trim();
+                const quantity = itemDiv.querySelector('.item-quantity')?.value;
+                const prixUnitaire = itemDiv.querySelector('.item-price')?.value;
+                
+                if (!productName) {
+                    errors.push(`Article ${index + 1}: Nom du produit requis`);
+                }
+                if (!quantity || quantity <= 0) {
+                    errors.push(`Article ${index + 1}: Quantité invalide`);
+                }
+                if (!prixUnitaire || prixUnitaire < 0) {
+                    errors.push(`Article ${index + 1}: Prix unitaire invalide`);
+                }
+            });
+            
+            if (errors.length > 0) {
+                showError(errors.join(', '));
+                return false;
+            }
+            
+            return true;
+        }
+
+        
+async function viewDetails(bcId) {
+    try {
+        // Show loading state
+        const detailsContent = document.getElementById('detailsContent');
+        detailsContent.innerHTML = `
+            <div class="flex justify-center items-center p-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <span class="ml-2 text-gray-600 dark:text-gray-400">Chargement des détails...</span>
+            </div>
+        `;
+        
+        // Show modal immediately with loading state
+        detailsModal.classList.remove('hidden');
+        
+        // Fetch data from API
+        const response = await fetch(`http://127.0.0.1:8000/gestion/api/bon-de-commande/${bcId}/`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`, // Adjust based on your auth method
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const bc = await response.json();
+        
+        // Build items table if items exist
+        let itemsTable = '';
+        if (bc.items && bc.items.length > 0) {
+            itemsTable = `
+                <div class="mt-6">
+                    <h4 class="font-semibold text-gray-900 dark:text-white mb-3">Articles</h4>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white dark:bg-gray-800 rounded-lg">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Produit</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Désignation</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quantité</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Prix Unitaire</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Montant HT</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
+                                ${bc.items.map(item => `
+                                    <tr>
+                                        <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">${item.product_name}</td>
+                                        <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">${item.designation || 'N/A'}</td>
+                                        <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">${item.quantity}</td>
+                                        <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">${item.prix_unitaire} DA</td>
+                                        <td class="px-4 py-2 text-sm text-green-600 font-semibold">${item.montant_ht} DA</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Update modal content with fetched data
+        detailsContent.innerHTML = `
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Informations Générales</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-gray-600 dark:text-gray-400">Numéro BC:</span>
+                        <span class="font-semibold ml-2">${bc.bc_number}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600 dark:text-gray-400">Date:</span>
+                        <span class="font-semibold ml-2">${new Date(bc.date_commande).toLocaleDateString()}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600 dark:text-gray-400">Total HT:</span>
+                        <span class="font-semibold ml-2 text-green-600">${bc.total_ht} DA</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600 dark:text-gray-400">Créé par:</span>
+                        <span class="font-semibold ml-2">${bc.created_by || 'N/A'}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600 dark:text-gray-400">PDF généré par:</span>
+                        <span class="font-semibold ml-2">${bc.pdf_generated_by || 'N/A'}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600 dark:text-gray-400">PDF généré le:</span>
+                        <span class="font-semibold ml-2">${bc.pdf_generated_at ? new Date(bc.pdf_generated_at).toLocaleDateString() : 'N/A'}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600 dark:text-gray-400">Statut PDF:</span>
+                        <span class="font-semibold ml-2 ${bc.has_pdf ? 'text-green-600' : 'text-orange-600'}">${bc.has_pdf ? 'Généré' : 'Non généré'}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600 dark:text-gray-400">Créé le:</span>
+                        <span class="font-semibold ml-2">${new Date(bc.created_at).toLocaleDateString()}</span>
+                    </div>
+                </div>
+            </div>
+            ${itemsTable}
+        `;
+        
+    } catch (error) {
+        console.error('Error fetching bon de commande details:', error);
+        
+        // Show error message
+        detailsContent.innerHTML = `
+            <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800 dark:text-red-400">
+                            Erreur lors du chargement des détails
+                        </h3>
+                        <p class="text-sm text-red-700 dark:text-red-400 mt-1">
+                            ${error.message || 'Une erreur est survenue lors du chargement des détails du bon de commande.'}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Keep modal open to show error
+        detailsModal.classList.remove('hidden');
+    }
+}
+        async function generatePDF(bcId) {
+    try {
+        showSuccess('Génération du PDF en cours...');
+        
+        const generateResponse = await fetch(`${API_BASE_URL}/bon-de-commande/${bcId}/generate-pdf/`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!generateResponse.ok) {
+            const error = await generateResponse.json();
+            throw new Error(error.error || 'Erreur lors de la génération du PDF');
+        }
+
+        const generateResult = await generateResponse.json();
+        showSuccess('PDF généré avec succès. Téléchargement en cours...');
+        
+        const downloadResponse = await fetch(`${API_BASE_URL}/bon-de-commande/${bcId}/download-pdf/`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+            }
+        });
+
+        if (!downloadResponse.ok) {
+            const error = await downloadResponse.json();
+            throw new Error(error.error || 'Erreur lors du téléchargement du PDF');
+        }
+
+        const blob = await downloadResponse.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        
+        const bc = bonCommandes.find(b => b.id === bcId);
+        const filename = bc ? `BC_${bc.bc_number}.pdf` : `BC_${bcId}.pdf`;
+        a.download = filename;
+        
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        showSuccess('PDF téléchargé avec succès');
+        
+        await loadBonCommandes();
+        
+    } catch (error) {
+        console.error('Error generating/downloading PDF:', error);
+        showError(error.message || 'Erreur lors de la génération/téléchargement du PDF');
+    }
+}
+
+        async function deleteBonCommande(bcId) {
+            // Find the bon de commande to show the BC number in the confirmation
+            const bc = bonCommandes.find(b => b.id === bcId);
+            const bcNumber = bc ? bc.bc_number : `#${bcId}`;
+            
+            Swal.fire({
+                title: 'Êtes-vous sûr?',
+                text: `Cette action supprimera définitivement le bon de commande ${bcNumber}!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Oui, supprimer!',
+                cancelButtonText: 'Annuler',
+                showLoaderOnConfirm: true,
+                preConfirm: async () => {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/delete-bon-de-commande/${bcId}/`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (!response.ok) {
+                            const error = await response.json();
+                            throw new Error(error.error || 'Erreur lors de la suppression');
+                        }
+
+                        const result = await response.json();
+                        return result;
+                    } catch (error) {
+                        Swal.showValidationMessage(
+                            `Erreur: ${error.message || 'Erreur de connexion'}`
+                        );
+                        return false;
+                    }
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    // Show success message
+                    Swal.fire({
+                        title: 'Supprimé!',
+                        text: result.value.message || 'Bon de commande supprimé avec succès',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    
+                    // Update the UI
+                    bonCommandes = bonCommandes.filter(bc => bc.id !== bcId);
+                    displayBonCommandes();
+                    updateStatistics();
+                }
+            });
+        }
+        document.getElementById('backToDashboard').addEventListener('click', function() {
+    window.location.href = 'dashboard.html';  // change '/dashboard' to your dashboard URL
+  });
+        function showError(message) {
+            console.error('Error:', message);
+            document.getElementById('errorMessage').textContent = message;
+            errorToast.classList.remove('hidden');
+            setTimeout(() => errorToast.classList.add('hidden'), 5000); // Increased timeout
+        }
+
+        function showSuccess(message) {
+            console.log('Success:', message);
+            document.getElementById('successMessage').textContent = message;
+            successToast.classList.remove('hidden');
+            setTimeout(() => successToast.classList.add('hidden'), 3000);
+        }
+
+        loadBonCommandes();
+    </script>
+</body>
+</html>

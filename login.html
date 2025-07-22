@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - ERP Génie Civil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .floating { animation: float 6s ease-in-out infinite; }
+        
+        .theme-transition {
+            transition: all 0.3s ease;
+        }
+        
+        .login-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .dark .login-card {
+            background: rgba(31, 41, 55, 0.95);
+            border: 1px solid rgba(75, 85, 99, 0.3);
+        }
+    </style>
+</head>
+<body class="theme-transition min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <!-- Dark Mode Toggle - Fixed Position -->
+    <div class="fixed top-4 right-4 z-50">
+        <button id="darkModeToggle" class="p-3 rounded-full bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700">
+            <svg id="sunIcon" class="w-6 h-6 text-gray-600 dark:text-gray-300 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+            <svg id="moonIcon" class="w-6 h-6 text-gray-600 dark:text-gray-300 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+            </svg>
+        </button>
+    </div>
+
+    <div class="w-full max-w-md">
+        <!-- Logo Container -->
+        <div class="text-center mb-8 floating">
+            <div class="w-24 h-24 mx-auto mb-4 bg-orange-500 rounded-full flex items-center justify-center shadow-2xl">
+                <div class="text-white text-4xl font-bold">ECH</div>
+            </div>
+            <h1 class="text-gray-900 dark:text-white text-3xl font-bold mb-2">ECH SAHARA</h1>
+            <p class="text-gray-600 dark:text-gray-400 text-lg">Entreprise de Travaux de Construction Hydraulique et Genie Civil
+</p>
+        </div>
+
+        <!-- Login Form -->
+        <div class="login-card rounded-2xl p-8 shadow-2xl">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white text-center mb-2">Connexion</h2>
+                <p class="text-gray-600 dark:text-gray-400 text-center">Accédez à votre espace de travail</p>
+            </div>
+
+            <form id="loginForm">
+                <div class="mb-6">
+                    <label for="username" class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
+                        Nom d'utilisateur
+                    </label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username"
+                        required
+                        class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+                        placeholder="Entrez votre nom d'utilisateur"
+                    >
+                </div>
+
+                <div class="mb-6">
+                    <label for="password" class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
+                        Mot de passe
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password"
+                        required
+                        class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+                        placeholder="Entrez votre mot de passe"
+                    >
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex items-center">
+                        <input 
+                            type="checkbox" 
+                            id="remember" 
+                            class="w-4 h-4 text-orange-500 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-orange-500 focus:ring-2"
+                        >
+                        <label for="remember" class="ml-2 text-gray-700 dark:text-gray-300 text-sm">
+                            Se souvenir de moi
+                        </label>
+                    </div>
+                </div>
+
+                <button 
+                    type="submit" 
+                    id="loginBtn"
+                    class="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold py-3 px-6 rounded-lg transform transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-orange-300 shadow-lg"
+                >
+                    <span id="loginText">Se connecter</span>
+                    <span id="loadingText" class="hidden">Connexion...</span>
+                </button>
+            </form>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="hidden mt-4 p-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded-lg text-red-700 dark:text-red-300 text-sm"></div>
+        </div>
+
+        <div class="text-center mt-6">
+            <p class="text-gray-600 dark:text-gray-400 text-sm">
+                Problème de connexion? 
+                <a href="#" class="text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 font-medium transition-colors">Contactez l'administrateur</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Dark Mode functionality
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const html = document.documentElement;
+        
+        // Check for saved theme preference or default to light mode
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        if (currentTheme === 'dark') {
+            html.classList.add('dark');
+        }
+        
+        darkModeToggle.addEventListener('click', function() {
+            html.classList.toggle('dark');
+            
+            // Save theme preference
+            if (html.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+        });
+        
+        // API Configuration - Update this with your actual backend URL
+        const API_BASE_URL = 'http://localhost:8000'; // Change this to your Django backend URL
+        
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginText = document.getElementById('loginText');
+            const loadingText = document.getElementById('loadingText');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Show loading state
+            loginBtn.disabled = true;
+            loginText.classList.add('hidden');
+            loadingText.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Store tokens
+                    localStorage.setItem('access_token', data.access);
+                    localStorage.setItem('refresh_token', data.refresh);
+                    localStorage.setItem('username', data.username);
+                    localStorage.setItem('user_groups', JSON.stringify(data.groups));
+                    
+                    // Success animation
+                    loginBtn.classList.remove('from-orange-500', 'to-red-500');
+                    loginBtn.classList.add('from-green-500', 'to-green-600');
+                    loadingText.textContent = 'Connexion réussie!';
+                    
+                    // Redirect to dashboard after short delay
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1500);
+                } else {
+                    throw new Error(data.detail || 'Ce Compte n\'est pas actif');
+                }
+            } catch (error) {
+                // Show error
+                errorMessage.textContent = error.message || 'Nom d\'utilisateur ou mot de passe incorrect';
+                errorMessage.classList.remove('hidden');
+                
+                // Reset button state
+                loginBtn.disabled = false;
+                loginText.classList.remove('hidden');
+                loadingText.classList.add('hidden');
+                loadingText.textContent = 'Connexion...';
+                loginBtn.classList.remove('from-green-500', 'to-green-600');
+                loginBtn.classList.add('from-orange-500', 'to-red-500');
+            }
+        });
+        
+        // Check if user is already logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                // Optionally verify token is still valid
+                window.location.href = 'dashboard.html';
+            }
+        });
+    </script>
+</body>
+</html>

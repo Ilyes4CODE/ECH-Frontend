@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ordre de Mission - ERP Génie Civil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes slideIn {
+            0% { transform: translateX(-100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .floating { animation: float 6s ease-in-out infinite; }
+        .slide-in { animation: slideIn 0.8s ease-out; }
+        .loading { animation: pulse 1.5s ease-in-out infinite; }
+        
+        .theme-transition {
+            transition: all 0.3s ease;
+        }
+
+        .fa-spin-custom {
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .mission-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body class="theme-transition min-h-screen bg-gray-50 dark:bg-gray-900">
+    <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-route text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-gray-900 dark:text-white font-bold text-xl">ECH SAHARA</h1>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">Ordre de Mission</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i id="sunIcon" class="fas fa-sun w-5 h-5 text-gray-600 dark:text-gray-300 hidden dark:block"></i>
+                        <i id="moonIcon" class="fas fa-moon w-5 h-5 text-gray-600 dark:text-gray-300 block dark:hidden"></i>
+                    </button>
+                    
+                    <button id="backToDashboard" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all duration-300">
+                        <i class="fas fa-arrow-left mr-2"></i>Tableau de Bord
+                    </button>
+                    
+                    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Déconnexion
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="loadingState" class="text-center py-12">
+            <i class="fas fa-spinner fa-spin-custom text-blue-500 text-6xl"></i>
+            <p class="text-gray-600 dark:text-gray-400 mt-4">Chargement des ordres de mission...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div class="slide-in mb-8">
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white shadow-2xl floating">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-3xl font-bold mb-2">Gestion des Ordres de Mission</h2>
+                            <p class="text-white/80">Créez et gérez vos ordres de mission facilement</p>
+                        </div>
+                        <div class="text-6xl opacity-30">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/20">
+                        <div class="text-center">
+                            <p class="text-white/80 text-sm">Total Missions</p>
+                            <p class="text-2xl font-bold text-yellow-300" id="totalMissions">0</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-white/80 text-sm">Ce Mois</p>
+                            <p class="text-2xl font-bold text-green-300" id="monthlyMissions">0</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-white/80 text-sm">Cette Semaine</p>
+                            <p class="text-2xl font-bold text-blue-300" id="weeklyMissions">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slide-in">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-gray-900 dark:text-white text-3xl font-bold">Liste des Ordres de Mission</h2>
+                    <div class="flex space-x-3">
+                        <button id="refreshBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all duration-300">
+                            <i class="fas fa-sync-alt mr-2"></i>Actualiser
+                        </button>
+                        <button id="newMissionBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-all duration-300 transform hover:scale-105">
+                            <i class="fas fa-plus mr-2"></i>Nouvel Ordre
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="missionsList">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="createMissionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl mx-4 max-h-screen overflow-y-auto">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                <i class="fas fa-plus-circle mr-2 text-blue-500"></i>Créer un Ordre de Mission
+            </h3>
+            <form id="createMissionForm">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <i class="fas fa-user mr-1"></i>Nom et Prénom *
+            </label>
+            <input type="text" id="nomPrenom" required class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <i class="fas fa-briefcase mr-1"></i>Fonction *
+            </label>
+            <input type="text" id="fonction" required class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+        </div>
+        
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <i class="fas fa-home mr-1"></i>Adresse *
+            </label>
+            <input type="text" id="adresse" required class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <i class="fas fa-map-marker-alt mr-1"></i>Destination *
+            </label>
+            <input type="text" id="destination" required class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <i class="fas fa-question-circle mr-1"></i>Motif *
+            </label>
+            <input type="text" id="motif" required placeholder="Ex: Dépannage, Installation, Maintenance..." class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <i class="fas fa-car mr-1"></i>Moyen de Déplacement *
+            </label>
+            <input type="text" id="moyenDeplacement" required class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <i class="fas fa-id-card mr-1"></i>Matricule *
+            </label>
+            <input type="text" id="matricule" required class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <i class="fas fa-id-card mr-1"></i>Matricule 2 (optionnel)
+            </label>
+            <input type="text" id="matricule2" placeholder="Matricule secondaire (optionnel)" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <i class="fas fa-calendar-alt mr-1"></i>Date de Départ *
+            </label>
+            <input type="date" id="dateDepart" required class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <i class="fas fa-calendar-check mr-1"></i>Date de Retour (optionnel)
+            </label>
+            <input type="date" id="dateRetour" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+            <small class="text-gray-500 dark:text-gray-400 text-xs mt-1">
+                Laisser vide pour "FIN DE MISSION"
+            </small>
+        </div>
+        
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <i class="fas fa-users mr-1"></i>Accompagné par
+            </label>
+            <input type="text" id="accompagnePar" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+        </div>
+    </div>
+    
+    <div class="flex justify-end space-x-3 mt-6">
+        <button type="button" id="cancelCreateBtn" class="px-6 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
+            <i class="fas fa-times mr-1"></i>Annuler
+        </button>
+        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors">
+            <i class="fas fa-check mr-1"></i>Créer l'Ordre
+        </button>
+    </div>
+</form>
+        </div>
+    </div>
+
+    <div id="errorToast" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <span id="errorMessage">Une erreur s'est produite</span>
+        </div>
+    </div>
+
+    <div id="successToast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span id="successMessage">Opération réussie</span>
+        </div>
+    </div>
+   <script>
+    let filteredMissions = []; // New variable to store filtered missions
+let currentFilter = '';
+const darkModeToggle = document.getElementById('darkModeToggle');
+const html = document.documentElement;
+
+// Note: localStorage usage removed for Claude.ai compatibility
+// In production, you would use localStorage for theme persistence
+let currentTheme = 'light';
+if (currentTheme === 'dark') {
+    html.classList.add('dark');
+}
+
+darkModeToggle.addEventListener('click', function() {
+    html.classList.toggle('dark');
+    currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+});
+
+const API_BASE_URL = 'http://127.0.0.1:8000';
+let missions = [];
+
+function showError(message) {
+    const errorToast = document.getElementById('errorToast');
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.textContent = message;
+    errorToast.classList.remove('hidden');
+    setTimeout(() => {
+        errorToast.classList.add('hidden');
+    }, 5000);
+}
+
+function showSuccess(message) {
+    const successToast = document.getElementById('successToast');
+    const successMessage = document.getElementById('successMessage');
+    successMessage.textContent = message;
+    successToast.classList.remove('hidden');
+    setTimeout(() => {
+        successToast.classList.add('hidden');
+    }, 3000);
+}
+
+async function makeAuthenticatedRequest(url, options = {}) {
+    // Note: In production, you would get token from localStorage
+    const token = localStorage.getItem('access_token'); // Replace with actual token management
+    if (!token) {
+        window.location.href = 'login.html';
+        return null;
+    }
+    
+    const defaultOptions = {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    };
+    
+    const response = await fetch(url, { ...options, ...defaultOptions });
+    
+    if (response.status === 401) {
+        window.location.href = 'login.html';
+        return null;
+    }
+    
+    return response;
+}
+
+function checkAuthentication() {
+    // Note: In production, you would check localStorage for token
+    return true; // Simplified for demo
+}
+
+// Empty state handling
+function showEmptyState() {
+    const missionsList = document.getElementById('missionsList');
+    missionsList.innerHTML = `
+        <div class="w-full h-full min-h-96 flex flex-col items-center justify-center py-16 px-4">
+            <div class="w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-6">
+                <i class="fas fa-route text-gray-400 dark:text-gray-500 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2 text-center">
+                Aucun ordre de mission
+            </h3>
+            <p class="text-gray-500 dark:text-gray-400 text-center mb-6 max-w-md mx-auto">
+                Il n'y a actuellement aucun ordre de mission à afficher. Créez votre premier ordre de mission pour commencer.
+            </p>
+            <button onclick="showCreateMissionModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors flex items-center justify-center">
+                <i class="fas fa-plus mr-2"></i>
+                Créer un ordre de mission
+            </button>
+        </div>
+    `;
+}
+
+async function loadMissions() {
+    try {
+        const response = await makeAuthenticatedRequest(`${API_BASE_URL}/gestion/api/ordre-mission/list/`);
+        if (response && response.ok) {
+            const result = await response.json();
+            missions = result.data || [];
+            updateStats();
+            renderMissions();
+        } else {
+            showError('Erreur lors du chargement des ordres de mission');
+        }
+    } catch (error) {
+        console.error('Error loading missions:', error);
+        showError('Erreur lors du chargement des ordres de mission');
+    }
+}
+
+function updateStats() {
+    const total = missions.length;
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const currentWeek = getWeekNumber(new Date());
+    
+    const monthlyCount = missions.filter(mission => {
+        const missionDate = parseDate(mission.date_creation);
+        return missionDate.getMonth() === currentMonth && missionDate.getFullYear() === currentYear;
+    }).length;
+    
+    const weeklyCount = missions.filter(mission => {
+        const missionDate = parseDate(mission.date_creation);
+        return getWeekNumber(missionDate) === currentWeek && missionDate.getFullYear() === currentYear;
+    }).length;
+    
+    const totalElement = document.getElementById('totalMissions');
+    const monthlyElement = document.getElementById('monthlyMissions');
+    const weeklyElement = document.getElementById('weeklyMissions');
+    
+    if (totalElement) totalElement.textContent = total;
+    if (monthlyElement) monthlyElement.textContent = monthlyCount;
+    if (weeklyElement) weeklyElement.textContent = weeklyCount;
+}
+
+function parseDate(dateString) {
+    const parts = dateString.split(' ')[0].split('/');
+    return new Date(parts[2], parts[1] - 1, parts[0]);
+}
+
+function getWeekNumber(date) {
+    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+    const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+    return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+}
+
+function renderMissions() {
+    const missionsList = document.getElementById('missionsList');
+    
+    // Check if missions array is empty
+    if (!missions || missions.length === 0) {
+        showEmptyState();
+        return;
+    }
+    
+    missionsList.innerHTML = '';
+    
+    missions.forEach(mission => {
+        const missionCard = createMissionCard(mission);
+        missionsList.appendChild(missionCard);
+    });
+}
+
+function createMissionCard(mission) {
+    const card = document.createElement('div');
+    card.className = 'mission-card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 transition-all duration-300 shadow-sm hover:shadow-lg';
+    
+    // Handle date retour display
+    const dateRetourDisplay = (mission.date_retour && mission.date_retour.trim() !== '') ? 
+        mission.date_retour : 
+        'FIN DE MISSION';
+    
+    // Check if matricule_2 exists and is not empty
+    const hasMatricule2 = mission.matricule_2 && mission.matricule_2.trim() !== '';
+    
+    // Build the matricule section HTML
+    let matriculeSection = `
+        <div class="flex items-center justify-between">
+            <span class="text-gray-500 dark:text-gray-400">
+                <i class="fas fa-id-card mr-1"></i>Matricule:
+            </span>
+            <span class="text-gray-900 dark:text-white">${mission.matricule}</span>
+        </div>`;
+    
+    // Add matricule_2 field if it exists
+    if (hasMatricule2) {
+        matriculeSection += `
+        <div class="flex items-center justify-between">
+            <span class="text-gray-500 dark:text-gray-400">
+                <i class="fas fa-id-card mr-1"></i>Matricule 2:
+            </span>
+            <span class="text-gray-900 dark:text-white">${mission.matricule_2}</span>
+        </div>`;
+    }
+    
+    card.innerHTML = `
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                <i class="fas fa-route text-white text-xl"></i>
+            </div>
+            <span class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 px-3 py-1 rounded-full text-sm font-medium">
+                ${mission.numero || 'N/A'}
+            </span>
+        </div>
+        
+        <h3 class="text-gray-900 dark:text-white text-xl font-bold mb-2">${mission.nom_prenom || 'N/A'}</h3>
+        <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">${mission.fonction || 'N/A'}</p>
+        
+        <div class="space-y-2 text-sm mb-4">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-map-marker-alt mr-1"></i>Destination:
+                </span>
+                <span class="text-gray-900 dark:text-white font-medium">${mission.destination || 'N/A'}</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-question-circle mr-1"></i>Motif:
+                </span>
+                <span class="text-blue-600 dark:text-blue-400">${mission.motif || 'N/A'}</span>
+            </div>
+            ${matriculeSection}
+            <div class="flex items-center justify-between">
+                <span class="text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-calendar-alt mr-1"></i>Date départ:
+                </span>
+                <span class="text-gray-900 dark:text-white">${mission.date_depart || 'N/A'}</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-calendar-check mr-1"></i>Date retour:
+                </span>
+                <span class="text-gray-900 dark:text-white">${dateRetourDisplay}</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-clock mr-1"></i>Créé le:
+                </span>
+                <span class="text-gray-900 dark:text-white">${mission.date_creation || 'N/A'}</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-user mr-1"></i>Créé par :
+                </span>
+                <span class="text-gray-900 dark:text-white">${mission.user || 'N/A'}</span>
+            </div>
+        </div>
+        
+        <div class="flex space-x-2">
+            <button onclick="viewMissionDetails(${mission.id})" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded-lg transition-colors text-sm">
+                <i class="fas fa-eye mr-1"></i>Détails
+            </button>
+            <button onclick="downloadPDF(${mission.id})" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 px-3 rounded-lg transition-colors text-sm">
+                <i class="fas fa-download mr-1"></i>PDF
+            </button>
+            <button onclick="deleteMission(${mission.id}, '${mission.numero || 'N/A'}')" class="bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg transition-colors">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    
+    return card;
+}
+
+function viewMissionDetails(missionId) {
+    // Show loading alert
+    Swal.fire({
+        title: 'Chargement...',
+        html: 'Récupération des détails de la mission',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Fetch mission details from API
+    fetch(`http://127.0.0.1:8000/gestion/api/ordre-mission/detail/${missionId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayMissionDetailsModal(data.data);
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: data.message || 'Impossible de charger les détails de la mission'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur de connexion',
+                text: 'Impossible de se connecter au serveur'
+            });
+        });
+}
+
+function displayMissionDetailsModal(mission) {
+    // Format dates
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString;
+        return date.toLocaleDateString('fr-FR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+    // Create the HTML content for the modal
+    const htmlContent = `
+        <div style="text-align: left; max-height: 70vh; overflow-y: auto;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; margin: -20px -20px 20px -20px; border-radius: 10px;">
+                <h2 style="margin: 0; font-size: 1.8em;"><i class="fas fa-clipboard-list"></i> Mission N° ${mission.numero}</h2>
+                <p style="margin: 5px 0 0 0; opacity: 0.9;"><i class="fas fa-calendar-plus"></i> Créée le ${mission.date_creation}</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 4px solid #3498db;">
+                    <h4 style="color: #2c3e50; margin: 0 0 10px 0;"><i class="fas fa-user" style="margin-right: 8px; color: #3498db;"></i>Informations Personnelles</h4>
+                    <p><i class="fas fa-id-card" style="margin-right: 8px; color: #666;"></i><strong>Nom et Prénom:</strong> ${mission.nom_prenom || 'N/A'}</p>
+                    <p><i class="fas fa-briefcase" style="margin-right: 8px; color: #666;"></i><strong>Fonction:</strong> ${mission.fonction || 'N/A'}</p>
+                    <p><i class="fas fa-map-marker-alt" style="margin-right: 8px; color: #666;"></i><strong>Adresse:</strong> ${mission.adresse || 'N/A'}</p>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 4px solid #e74c3c;">
+                    <h4 style="color: #2c3e50; margin: 0 0 10px 0;"><i class="fas fa-bullseye" style="margin-right: 8px; color: #e74c3c;"></i>Détails de la Mission</h4>
+                    <p><i class="fas fa-flag-checkered" style="margin-right: 8px; color: #666;"></i><strong>Destination:</strong> ${mission.destination || 'N/A'}</p>
+                    <p><i class="fas fa-comment-alt" style="margin-right: 8px; color: #666;"></i><strong>Motif:</strong> ${mission.motif_display || mission.motif || 'N/A'}</p>
+                    <p><i class="fas fa-car" style="margin-right: 8px; color: #666;"></i><strong>Moyen de déplacement:</strong> ${mission.moyen_deplacement || 'N/A'}</p>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 4px solid #27ae60;">
+                    <h4 style="color: #2c3e50; margin: 0 0 10px 0;"><i class="fas fa-calendar-alt" style="margin-right: 8px; color: #27ae60;"></i>Dates</h4>
+                    <p><i class="fas fa-plane-departure" style="margin-right: 8px; color: #666;"></i><strong>Date de départ:</strong> ${formatDate(mission.date_depart)}</p>
+                    <p><i class="fas fa-plane-arrival" style="margin-right: 8px; color: #666;"></i><strong>Date de retour:</strong> ${formatDate(mission.date_retour)}</p>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 4px solid #f39c12;">
+                    <h4 style="color: #2c3e50; margin: 0 0 10px 0;"><i class="fas fa-car-side" style="margin-right: 8px; color: #f39c12;"></i>Véhicules</h4>
+                    <p><i class="fas fa-hashtag" style="margin-right: 8px; color: #666;"></i><strong>Matricule 1:</strong> ${mission.matricule || 'N/A'}</p>
+                    <p><i class="fas fa-hashtag" style="margin-right: 8px; color: #666;"></i><strong>Matricule 2:</strong> ${mission.matricule_2 || 'N/A'}</p>
+                </div>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 4px solid #9b59b6; margin-bottom: 20px;">
+                <h4 style="color: #2c3e50; margin: 0 0 10px 0;"><i class="fas fa-users" style="margin-right: 8px; color: #9b59b6;"></i>Accompagnement</h4>
+                <p><i class="fas fa-user-friends" style="margin-right: 8px; color: #666;"></i>${mission.accompagne_par || 'Aucun accompagnant'}</p>
+            </div>
+
+            ${mission.qr_code_data ? `
+                <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 10px;">
+                    <h4 style="color: #2c3e50; margin: 0 0 15px 0;"><i class="fas fa-qrcode" style="margin-right: 8px; color: #17a2b8;"></i>Code QR</h4>
+                    <div style="background: white; padding: 15px; border-radius: 10px; display: inline-block; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <img src="${mission.qr_code_data}" alt="QR Code" style="max-width: 200px; height: auto;" onerror="this.style.display='none'; this.parentElement.innerHTML='<p style=color:#e74c3c;><i class=fas fa-exclamation-triangle></i> Code QR non disponible</p>';">
+                    </div>
+                </div>
+            ` : `
+                <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 10px;">
+                    <h4 style="color: #2c3e50; margin: 0 0 15px 0;"><i class="fas fa-qrcode" style="margin-right: 8px; color: #17a2b8;"></i>Code QR</h4>
+                    <div style="background: white; padding: 15px; border-radius: 10px; display: inline-block; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <p style="color: #6c757d; margin: 0;"><i class="fas fa-info-circle"></i> Code QR non disponible</p>
+                    </div>
+                </div>
+            `}
+        </div>
+    `;
+
+    // Show the detailed modal
+    Swal.fire({
+        title: 'Détails de la Mission',
+        html: htmlContent,
+        width: '90%',
+        maxWidth: '1000px',
+        showCloseButton: true,
+        showConfirmButton: true,
+        confirmButtonText: '<i class="fas fa-times"></i> Fermer',
+        confirmButtonColor: '#3498db',
+        customClass: {
+            popup: 'mission-details-popup'
+        },
+        didOpen: () => {
+            // Add custom styles
+            const style = document.createElement('style');
+            style.textContent = `
+                .mission-details-popup {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                }
+                .mission-details-popup p {
+                    margin: 8px 0;
+                    line-height: 1.5;
+                }
+                .mission-details-popup h4 {
+                    display: flex;
+                    align-items: center;
+                    font-size: 1.1em;
+                }
+                .mission-details-popup i {
+                    width: 16px;
+                    text-align: center;
+                }
+                @media (max-width: 768px) {
+                    .mission-details-popup [style*="grid-template-columns: 1fr 1fr"] {
+                        display: block !important;
+                    }
+                    .mission-details-popup [style*="grid-template-columns: 1fr 1fr"] > div {
+                        margin-bottom: 15px;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    });
+}
+
+async function downloadPDF(missionId) {
+    try {
+        const token = localStorage.getItem('access_token'); // Replace with actual token management
+        const response = await fetch(`${API_BASE_URL}/gestion/api/ordre-mission/pdf/${missionId}/`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `ordre_mission_${missionId}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            showSuccess('PDF téléchargé avec succès');
+        } else {
+            showError('Erreur lors du téléchargement du PDF');
+        }
+    } catch (error) {
+        console.error('Error downloading PDF:', error);
+        showError('Erreur lors du téléchargement du PDF');
+    }
+}
+
+async function deleteMission(missionId, missionNumber) {
+    // Using SweetAlert2 for confirmation
+    const result = await Swal.fire({
+        title: 'Êtes-vous sûr ?',
+        text: `Voulez-vous vraiment supprimer l'ordre de mission ${missionNumber} ?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler',
+        reverseButtons: true
+    });
+    
+    if (result.isConfirmed) {
+        try {
+            const response = await makeAuthenticatedRequest(`${API_BASE_URL}/gestion/api/ordre-mission/delete/${missionId}/`, {
+                method: 'DELETE'
+            });
+            
+            if (response && response.ok) {
+                // Success notification with SweetAlert2
+                await Swal.fire({
+                    title: 'Supprimé !',
+                    text: `Ordre de mission ${missionNumber} supprimé avec succès`,
+                    icon: 'success',
+                    confirmButtonColor: '#28a745'
+                });
+                await loadMissions();
+            } else {
+                // Error notification with SweetAlert2
+                await Swal.fire({
+                    title: 'Erreur',
+                    text: 'Erreur lors de la suppression',
+                    icon: 'error',
+                    confirmButtonColor: '#dc3545'
+                });
+            }
+        } catch (error) {
+            console.error('Error deleting mission:', error);
+            // Error notification with SweetAlert2
+            await Swal.fire({
+                title: 'Erreur',
+                text: 'Erreur lors de la suppression',
+                icon: 'error',
+                confirmButtonColor: '#dc3545'
+            });
+        }
+    }
+}
+async function createMission(missionData) {
+    try {
+        const response = await makeAuthenticatedRequest(`${API_BASE_URL}/gestion/api/ordre-mission/create/`, {
+            method: 'POST',
+            body: JSON.stringify(missionData)
+        });
+        
+        if (response && response.ok) {
+            const result = await response.json();
+            showSuccess('Ordre de mission créé avec succès');
+            await loadMissions();
+            return result;
+        } else {
+            const errorData = await response.json();
+            showError('Erreur lors de la création: ' + (errorData.message || 'Erreur inconnue'));
+            return null;
+        }
+    } catch (error) {
+        console.error('Error creating mission:', error);
+        showError('Erreur lors de la création de l\'ordre de mission');
+        return null;
+    }
+}
+
+// Update the form submission handler
+document.getElementById('createMissionForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const username = 'System'; // Replace with actual username management
+    
+    const missionData = {
+        nom_prenom: document.getElementById('nomPrenom').value,
+        fonction: document.getElementById('fonction').value,
+        adresse: document.getElementById('adresse').value,
+        destination: document.getElementById('destination').value,
+        motif: document.getElementById('motif').value,
+        moyen_deplacement: document.getElementById('moyenDeplacement').value,
+        matricule: document.getElementById('matricule').value,
+        matricule_2: document.getElementById('matricule2').value || null,
+        date_depart: document.getElementById('dateDepart').value,
+        date_retour: document.getElementById('dateRetour').value || null,
+        accompagne_par: document.getElementById('accompagnePar').value,
+        created_by: username
+    };
+    
+    const result = await createMission(missionData);
+    if (result) {
+        document.getElementById('createMissionModal')?.classList.add('hidden');
+        document.getElementById('createMissionForm')?.reset();
+    }
+});
+
+function showCreateMissionModal() {
+    document.getElementById('createMissionModal')?.classList.remove('hidden');
+    const dateDepart = document.getElementById('dateDepart');
+    if (dateDepart) {
+        dateDepart.value = new Date().toISOString().split('T')[0];
+    }
+}
+
+async function initializePage() {
+    if (!checkAuthentication()) return;
+    
+    const loadingState = document.getElementById('loadingState');
+    const mainContent = document.getElementById('mainContent');
+    
+    if (loadingState) loadingState.classList.remove('hidden');
+    
+    try {
+        await loadMissions();
+        if (loadingState) loadingState.classList.add('hidden');
+        if (mainContent) mainContent.classList.remove('hidden');
+    } catch (error) {
+        console.error('Error initializing page:', error);
+        showError('Erreur lors de l\'initialisation de la page');
+        if (loadingState) loadingState.classList.add('hidden');
+        if (mainContent) mainContent.classList.remove('hidden');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializePage();
+});
+
+// Event listeners with null checks
+document.getElementById('logoutBtn')?.addEventListener('click', function() {
+    const confirmed = confirm('Êtes-vous sûr de vouloir vous déconnecter ?');
+    if (confirmed) {
+        window.location.href = 'login.html';
+    }
+});
+
+document.getElementById('backToDashboard')?.addEventListener('click', function() {
+    window.location.href = 'dashboard.html';
+});
+
+document.getElementById('newMissionBtn')?.addEventListener('click', function() {
+    showCreateMissionModal();
+});
+
+document.getElementById('refreshBtn')?.addEventListener('click', function() {
+    loadMissions();
+});
+
+document.getElementById('cancelCreateBtn')?.addEventListener('click', function() {
+    document.getElementById('createMissionModal')?.classList.add('hidden');
+});
+   </script>
+    
+</body>

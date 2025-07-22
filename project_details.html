@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détails du Projet - ERP Génie Civil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes slideIn {
+            0% { transform: translateX(-100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .floating { animation: float 6s ease-in-out infinite; }
+        .slide-in { animation: slideIn 0.8s ease-out; }
+        .loading { animation: pulse 1.5s ease-in-out infinite; }
+        
+        .project-header-light {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .project-header-dark {
+            background: linear-gradient(135deg, #4c1d95 0%, #581c87 100%);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .theme-transition {
+            transition: all 0.3s ease;
+        }
+
+        .fa-spin-custom {
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .modal-content {
+            max-height: 80vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #f97316 #f3f4f6;
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: #f3f4f6;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #f97316;
+            border-radius: 3px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #ea580c;
+        }
+
+        .history-item {
+            transition: all 0.3s ease;
+        }
+
+        .history-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .collaborator-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .collaborator-btn:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-2px);
+        }
+
+        .edit-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .edit-btn:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="theme-transition min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Navigation Bar -->
+    <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <button id="backBtn" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-arrow-left text-gray-600 dark:text-gray-300"></i>
+                    </button>
+                    <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-project-diagram text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-gray-900 dark:text-white font-bold text-xl">ECH SAHARA</h1>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">Détails du Projet</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Dark Mode Toggle -->
+                    <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i id="sunIcon" class="fas fa-sun w-5 h-5 text-gray-600 dark:text-gray-300 hidden dark:block"></i>
+                        <i id="moonIcon" class="fas fa-moon w-5 h-5 text-gray-600 dark:text-gray-300 block dark:hidden"></i>
+                    </button>
+                    
+                    <div class="text-gray-900 dark:text-white text-right">
+                        <p class="font-medium" id="welcomeUser">Bienvenue</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400" id="userRole">Utilisateur</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-12">
+            <i class="fas fa-spinner fa-spin-custom text-orange-500 text-6xl"></i>
+            <p class="text-gray-600 dark:text-gray-400 mt-4">Chargement des détails du projet...</p>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="hidden">
+            <!-- Project Header -->
+            <div class="mb-8 slide-in">
+                <div class="project-header-light dark:project-header-dark rounded-2xl p-8 text-white shadow-2xl floating">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h2 class="text-3xl font-bold mb-2" id="projectName">Nom du Projet</h2>
+                            <p class="text-white/80 mb-4" id="projectDescription">Description du projet</p>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                                <div>
+                                    <p class="text-white/80 text-sm">Budget Estimé</p>
+                                    <p class="text-xl font-bold" id="estimatedBudget">0 DZD</p>
+                                </div>
+                                <div>
+                                    <p class="text-white/80 text-sm">Total Dépenses</p>
+                                    <p class="text-xl font-bold text-red-300" id="totalDepenses">0 DZD</p>
+                                </div>
+                                <div>
+                                    <p class="text-white/80 text-sm">Total Reçus</p>
+                                    <p class="text-xl font-bold text-green-300" id="totalRecus">0 DZD</p>
+                                </div>
+                                <div>
+                                    <p class="text-white/80 text-sm">Sold</p>
+                                    <p class="text-xl font-bold text-yellow-300" id="totalBenefices">0 DZD</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-right ml-6">
+                            <div class="flex flex-col space-y-3">
+                                <button id="editProjectBtn" class="edit-btn text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+                                    <i class="fas fa-edit mr-1"></i>Modifier
+                                </button>
+                                
+                                <button id="collaboratorBtn" class="collaborator-btn text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hidden">
+                                    <i class="fas fa-users mr-1"></i>Collaborateur
+                                </button>
+                                
+                                <button id="historyBtn" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all duration-300">
+                                    <i class="fas fa-history mr-1"></i>Historique
+                                </button>
+                            </div>
+                            
+                            <div class="text-6xl opacity-30 mt-4">
+                                <i class="fas fa-project-diagram"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Details Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- Basic Information -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        <i class="fas fa-info-circle text-blue-500 mr-2"></i>Informations Générales
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Opération</p>
+                            <p class="font-medium text-gray-900 dark:text-white" id="projectOperation">--</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Numéro d'Opération</p>
+                            <p class="font-medium text-gray-900 dark:text-white" id="numeroOperation">--</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Date de Début</p>
+                            <p class="font-medium text-gray-900 dark:text-white" id="dateDebut">--</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Période (mois)</p>
+                            <p class="font-medium text-gray-900 dark:text-white" id="periodMonths">--</p>
+                        </div>
+                        <div id="collaboratorInfo" class="hidden">
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Collaborateur</p>
+                            <p class="font-medium text-gray-900 dark:text-white" id="collaboratorName">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Creation Information -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        <i class="fas fa-user-clock text-green-500 mr-2"></i>Informations de Création
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Créé par</p>
+                            <p class="font-medium text-gray-900 dark:text-white" id="createdBy">--</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Date de Création</p>
+                            <p class="font-medium text-gray-900 dark:text-white" id="createdAt">--</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Project Modal -->
+    <div id="editModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black opacity-50"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Modifier le Projet</h3>
+                    <button id="closeEditModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form id="editProjectForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom du Projet</label>
+                        <input type="text" id="editProjectName" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                        <textarea id="editProjectDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Budget Estimé (DZD)</label>
+                        <input type="number" id="editEstimatedBudget" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom du Collaborateur</label>
+                        <input type="text" id="editCollaboratorName" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                    </div>
+
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg transition-colors">
+                            <i class="fas fa-save mr-2"></i>Enregistrer
+                        </button>
+                        <button type="button" id="cancelEdit" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg transition-colors">
+                            <i class="fas fa-times mr-2"></i>Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collaborator Modal -->
+    <div id="collaboratorModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black opacity-50"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full shadow-xl">
+                <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        <i class="fas fa-users text-green-500 mr-2"></i>Opérations du Collaborateur
+                    </h3>
+                    <button id="closeCollaboratorModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="modal-content p-6">
+                    <!-- Collaborator Stats -->
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="bg-green-100 dark:bg-green-900 rounded-lg p-4 text-center">
+                            <i class="fas fa-arrow-up text-green-600 dark:text-green-300 text-2xl mb-2"></i>
+                            <p class="text-sm text-green-600 dark:text-green-300">Total Reçus</p>
+                            <p class="text-xl font-bold text-green-700 dark:text-green-200" id="collaboratorRecus">0 DZD</p>
+                        </div>
+                        <div class="bg-red-100 dark:bg-red-900 rounded-lg p-4 text-center">
+                            <i class="fas fa-arrow-down text-red-600 dark:text-red-300 text-2xl mb-2"></i>
+                            <p class="text-sm text-red-600 dark:text-red-300">Total Dépenses</p>
+                            <p class="text-xl font-bold text-red-700 dark:text-red-200" id="collaboratorDepenses">0 DZD</p>
+                        </div>
+                        <div class="bg-blue-100 dark:bg-blue-900 rounded-lg p-4 text-center">
+                            <i class="fas fa-calculator text-blue-600 dark:text-blue-300 text-2xl mb-2"></i>
+                            <p class="text-sm text-blue-600 dark:text-blue-300">Total Opérations</p>
+                            <p class="text-xl font-bold text-blue-700 dark:text-blue-200" id="collaboratorOperations">0</p>
+                        </div>
+                    </div>
+
+                    <!-- Collaborator Operations List -->
+                    <div id="collaboratorOperationsList" class="space-y-3">
+                        <!-- Operations will be loaded here -->
+                    </div>
+
+                    <div id="noCollaboratorOperations" class="text-center py-8 hidden">
+                        <i class="fas fa-inbox text-gray-400 text-4xl mb-4"></i>
+                        <p class="text-gray-600 dark:text-gray-400">Aucune opération du collaborateur trouvée</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black opacity-50"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full shadow-xl">
+                <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        <i class="fas fa-history text-blue-500 mr-2"></i>Historique du Projet
+                    </h3>
+                    <button id="closeHistoryModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="modal-content p-6">
+                    <div id="historyList" class="space-y-4">
+                        <!-- History items will be loaded here -->
+                    </div>
+
+                    <div id="noHistory" class="text-center py-8 hidden">
+                        <i class="fas fa-clock text-gray-400 text-4xl mb-4"></i>
+                        <p class="text-gray-600 dark:text-gray-400">Aucun historique trouvé</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Messages -->
+    <div id="errorToast" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <span id="errorMessage">Une erreur s'est produite</span>
+        </div>
+    </div>
+
+    <div id="successToast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span id="successMessage">Opération réussie</span>
+        </div>
+    </div>
+
+       <script src="api/project_detailed..js"></script>        
+</body>
+    

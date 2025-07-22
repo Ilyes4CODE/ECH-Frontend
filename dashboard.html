@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord - ERP Génie Civil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes slideIn {
+            0% { transform: translateX(-100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .floating { animation: float 6s ease-in-out infinite; }
+        .slide-in { animation: slideIn 0.8s ease-out; }
+        .loading { animation: pulse 1.5s ease-in-out infinite; }
+        
+        .money-card-light {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .money-card-dark {
+            background: linear-gradient(135deg, #4c1d95 0%, #581c87 100%);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .project-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .theme-transition {
+            transition: all 0.3s ease;
+        }
+
+        .status-badge {
+            @apply px-3 py-1 rounded-full text-sm font-medium;
+        }
+
+        .status-active {
+            @apply bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300 border border-green-200 dark:border-green-800;
+        }
+
+        .status-planning {
+            @apply bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800;
+        }
+
+        .status-completed {
+            @apply bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800;
+        }
+
+        .fa-spin-custom {
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .animate-pulse {
+            animation: pulse 1s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        #modalContent {
+    scrollbar-width: thin;
+    scrollbar-color: #f97316 #f3f4f6;
+}
+
+#modalContent::-webkit-scrollbar {
+    width: 6px;
+}
+
+#modalContent::-webkit-scrollbar-track {
+    background: #f3f4f6;
+}
+
+#modalContent::-webkit-scrollbar-thumb {
+    background: #f97316;
+    border-radius: 3px;
+}
+
+#modalContent::-webkit-scrollbar-thumb:hover {
+    background: #ea580c;
+}
+    </style>
+</head>
+<body class="theme-transition min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Navigation Bar -->
+    <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-chart-line text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-gray-900 dark:text-white font-bold text-xl">ECH SAHARA</h1>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">Tableau de Bord</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+    <!-- Dark Mode Toggle -->
+    <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+        <i id="sunIcon" class="fas fa-sun w-5 h-5 text-gray-600 dark:text-gray-300 hidden dark:block"></i>
+        <i id="moonIcon" class="fas fa-moon w-5 h-5 text-gray-600 dark:text-gray-300 block dark:hidden"></i>
+    </button>
+    
+    <!-- Profile Button -->
+    <button id="profileBtn" class="flex items-center space-x-2 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 transform hover:scale-105">
+        <i class="fas fa-user text-gray-600 dark:text-gray-300"></i>
+        <span class="text-gray-600 dark:text-gray-300 text-sm font-medium">Profil</span>
+    </button>
+    
+    <div class="text-gray-900 dark:text-white text-right">
+        <p class="font-medium" id="welcomeUser">Bienvenue</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400" id="userRole">Chargement...</p>
+    </div>
+    
+    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105">
+        <i class="fas fa-sign-out-alt mr-2"></i>Déconnexion
+    </button>
+</div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-12">
+            <i class="fas fa-spinner fa-spin-custom text-orange-500 text-6xl"></i>
+            <p class="text-gray-600 dark:text-gray-400 mt-4">Chargement des données...</p>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="hidden">
+            <!-- Money/Caisse Card -->
+            <div class="mb-8 slide-in">
+                <div class="money-card-light dark:money-card-dark rounded-2xl p-8 text-white shadow-2xl floating">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-2xl font-bold mb-2">Solde de Caisse</h2>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-4xl font-bold" id="cashAmount">0.00</span>
+                                <span class="text-2xl font-medium">DZD</span>
+                            </div>
+                            <p class="text-white/80 mt-2">Dernière mise à jour: <span id="lastUpdate">--</span></p>
+                        </div>
+                        <div class="text-right">
+                            <button id="updateCaisseBtn" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all duration-300 mb-2">
+                                <i class="fas fa-edit mr-1"></i>Mettre à jour
+                            </button>
+                            
+                            <button id="viewHistoryBtn" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all duration-300 mb-2 mr-2">
+                                <i class="fas fa-history mr-1"></i>Historique
+                            </button>
+                            <div class="text-6xl opacity-30">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Stats -->
+                    <div class="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/20">
+                        <div class="text-center">
+                            <p class="text-white/80 text-sm">Projets Actifs</p>
+                            <p class="text-xl font-bold text-green-300" id="activeProjectsCount">0</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-white/80 text-sm">Total Dépensé</p>
+                            <p class="text-xl font-bold text-red-300" id="totalSpent">0 DZD</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-white/80 text-sm">Total Projets</p>
+                            <p class="text-xl font-bold text-yellow-300" id="totalProjects">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projects Section -->
+            <div class="slide-in">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-gray-900 dark:text-white text-3xl font-bold">Projets Récents</h2>
+                    
+                   <div class="flex space-x-3">
+    <button id="refreshProjectsBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all duration-300">
+        <i class="fas fa-sync-alt mr-2"></i>Actualiser
+    </button>
+    
+    <!-- Dropdown Container -->
+    <div class="relative">
+        <button id="actionsDropdownBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center">
+            <i class="fas fa-plus mr-2"></i>
+            Actions
+            <i class="fas fa-chevron-down ml-2"></i>
+        </button>
+        
+        <!-- Dropdown Menu -->
+        <div id="actionsDropdown" class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 hidden">
+            <div class="py-2">
+                <button id="newProjectBtn" class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center transition-colors">
+                    <i class="fas fa-plus mr-3 text-orange-500"></i>
+                    Nouveau Projet
+                </button>
+                <button id="usersBtn" class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center transition-colors">
+                    <i class="fas fa-users mr-3 text-blue-500"></i>
+                    Utilisateurs
+                </button>
+                <button id="Ordredemission" class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center transition-colors">
+                    <i class="fas fa-file-alt mr-3 text-green-500"></i>
+                    Ordre De Mission
+                </button>
+                <button id="BonDeLivraison" class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center transition-colors">
+                    <i class="fas fa-truck mr-3 text-purple-500"></i>
+                    Bon De Livraison
+                </button>
+                <button id="BonDeCommande" class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center transition-colors">
+                    <i class="fas fa-shopping-cart mr-3 text-red-500"></i>
+                    Bon De Commande
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                    
+                </div>
+                <!-- Project Filters -->
+<div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-6 shadow-sm border border-gray-200 dark:border-gray-700">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4">
+        <div class="flex items-center space-x-2">
+            <i class="fas fa-filter text-gray-500 dark:text-gray-400"></i>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Filtres:</span>
+        </div>
+        
+        <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4">
+            <!-- Name Filter -->
+            <div class="flex-1 md:max-w-xs">
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                    <i class="fas fa-search mr-1"></i>Nom du projet
+                </label>
+                <input 
+                    type="text" 
+                    id="nameFilter" 
+                    placeholder="Rechercher par nom..." 
+                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                >
+            </div>
+            
+            <!-- Date Filter -->
+            <div class="flex-1 md:max-w-xs">
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                    <i class="fas fa-calendar mr-1"></i>Date de création
+                </label>
+                <input 
+                    type="date" 
+                    id="dateFilter" 
+                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                >
+            </div>
+            
+            <!-- Clear Filters Button -->
+            <div class="flex items-end">
+                <button 
+                    id="clearFiltersBtn" 
+                    class="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                >
+                    <i class="fas fa-times mr-1"></i>Effacer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                <!-- Projects Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="projectsList">
+                    <!-- Projects will be loaded here -->
+                </div>
+
+                <!-- Load More Button -->
+                <div class="text-center mt-8">
+                    <button id="loadMoreBtn" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-8 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <i class="fas fa-chevron-down mr-2"></i>Charger plus de projets
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Update Caisse Modal -->
+    
+
+    <!-- Error Toast -->
+    <div id="errorToast" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <span id="errorMessage">Une erreur s'est produite</span>
+        </div>
+    </div>
+
+    <!-- Success Toast -->
+    <div id="successToast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span id="successMessage">Opération réussie</span>
+        </div>
+    </div>
+
+    <script src="api/dashboard.js"></script>
+  
+    
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historique de Caisse - ERP Génie Civil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        @keyframes slideIn {
+            0% { transform: translateX(-100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .slide-in { animation: slideIn 0.8s ease-out; }
+        .loading { animation: pulse 1.5s ease-in-out infinite; }
+        
+        .theme-transition {
+            transition: all 0.3s ease;
+        }
+
+        .fa-spin-custom {
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-badge {
+            @apply px-3 py-1 rounded-full text-sm font-medium;
+        }
+
+        .operation-encaissement {
+            @apply bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300 border border-green-200 dark:border-green-800;
+        }
+
+        .operation-decaissement {
+            @apply bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800;
+        }
+
+        .operation-transfer {
+            @apply bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800;
+        }
+    </style>
+</head>
+<body class="theme-transition min-h-screen bg-gray-50 dark:bg-gray-900">
+    <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <button id="backBtn" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-arrow-left text-gray-600 dark:text-gray-300"></i>
+                    </button>
+                    <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-history text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-gray-900 dark:text-white font-bold text-xl">Historique de Caisse</h1>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">Toutes les opérations</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i id="sunIcon" class="fas fa-sun w-5 h-5 text-gray-600 dark:text-gray-300 hidden dark:block"></i>
+                        <i id="moonIcon" class="fas fa-moon w-5 h-5 text-gray-600 dark:text-gray-300 block dark:hidden"></i>
+                    </button>
+                    
+                    <div class="text-gray-900 dark:text-white text-right">
+                        <p class="font-medium" id="welcomeUser">Bienvenue</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400" id="userRole">Chargement...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="loadingState" class="text-center py-12">
+            <i class="fas fa-spinner fa-spin-custom text-orange-500 text-6xl"></i>
+            <p class="text-gray-600 dark:text-gray-400 mt-4">Chargement de l'historique...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                <div class="p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        <i class="fas fa-filter mr-2 text-orange-500"></i>Filtres de recherche
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-calendar-alt mr-1"></i>Année
+                            </label>
+                            <select id="yearFilter" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
+                                <option value="">Toutes les années</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-calendar mr-1"></i>Mois
+                            </label>
+                            <select id="monthFilter" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
+                                <option value="">Tous les mois</option>
+                                <option value="1">Janvier</option>
+                                <option value="2">Février</option>
+                                <option value="3">Mars</option>
+                                <option value="4">Avril</option>
+                                <option value="5">Mai</option>
+                                <option value="6">Juin</option>
+                                <option value="7">Juillet</option>
+                                <option value="8">Août</option>
+                                <option value="9">Septembre</option>
+                                <option value="10">Octobre</option>
+                                <option value="11">Novembre</option>
+                                <option value="12">Décembre</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-calendar-day mr-1"></i>Jour
+                            </label>
+                            <input type="number" id="dayFilter" min="1" max="31" placeholder="Jour" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
+                        </div>
+                        
+                        <div class="flex items-end">
+                            <button id="searchBtn" class="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg transition-colors">
+                                <i class="fas fa-search mr-2"></i>Rechercher
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-calendar-week mr-1"></i>Période personnalisée
+                            </label>
+                            <div class="flex space-x-2">
+                                <input type="date" id="startDate" class="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
+                                <input type="date" id="endDate" class="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
+                                <button id="periodSearchBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg transition-colors">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-end space-x-2">
+                            <button id="clearFiltersBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-3 rounded-lg transition-colors">
+                                <i class="fas fa-eraser mr-2"></i>Effacer
+                            </button>
+                            <button id="generatePdfBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-lg transition-colors">
+                                <i class="fas fa-file-pdf mr-2"></i>Générer PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                            <i class="fas fa-chart-bar mr-2 text-orange-500"></i>Résumé des opérations
+                        </h2>
+                        <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                            <i class="fas fa-sync-alt"></i>
+                            <span id="lastRefresh">--</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-green-50 dark:bg-green-900 p-4 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-arrow-down text-white"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-green-600 dark:text-green-300">Encaissements</p>
+                                    <p class="text-lg font-semibold text-green-700 dark:text-green-200" id="totalEncaissements">0 DZD</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-red-50 dark:bg-red-900 p-4 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-arrow-up text-white"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-red-600 dark:text-red-300">Décaissements</p>
+                                    <p class="text-lg font-semibold text-red-700 dark:text-red-200" id="totalDecaissements">0 DZD</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-balance-scale text-white"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-blue-600 dark:text-blue-300">Solde Net</p>
+                                    <p class="text-lg font-semibold text-blue-700 dark:text-blue-200" id="netBalance">0 DZD</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-list-ol text-white"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">Total Opérations</p>
+                                    <p class="text-lg font-semibold text-gray-700 dark:text-gray-200" id="totalOperations">0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                            <i class="fas fa-list mr-2 text-orange-500"></i>Historique des opérations
+                        </h2>
+                        <button id="refreshBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i>Actualiser
+                        </button>
+                    </div>
+                    
+                    <div id="operationsList" class="space-y-4">
+                    </div>
+                    <div id="paginationControls" class="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                            Affichage de <span id="itemsStart">0</span> à <span id="itemsEnd">0</span> sur <span id="totalItems">0</span> opérations
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button id="prevPage" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="fas fa-chevron-left mr-1"></i>Précédent
+                            </button>
+                            <div id="pageNumbers" class="flex items-center space-x-1">
+                            </div>
+                            <button id="nextPage" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                Suivant<i class="fas fa-chevron-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="noOperations" class="text-center py-12 hidden">
+                        <i class="fas fa-inbox text-gray-400 text-6xl"></i>
+                        <p class="text-gray-600 dark:text-gray-400 mt-4 text-lg">Aucune opération trouvée</p>
+                        <p class="text-gray-500 dark:text-gray-500 text-sm">Essayez de modifier vos critères de recherche</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="errorToast" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <span id="errorMessage">Une erreur s'est produite</span>
+        </div>
+    </div>
+
+    <div id="successToast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span id="successMessage">Opération réussie</span>
+        </div>
+    </div>
+
+    <script src="api/caisse_history.js"></script>
+</body>
+    
+
+    
