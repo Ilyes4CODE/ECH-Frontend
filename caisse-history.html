@@ -139,6 +139,90 @@
                             <input type="number" id="dayFilter" min="1" max="31" placeholder="Jour" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
                         </div>
                         
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-tasks mr-1"></i>Type d'action
+                            </label>
+                            <select id="actionFilter" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
+                                <option value="">Toutes les actions</option>
+                                <option value="encaissement">Encaissement</option>
+                                <option value="decaissement">Décaissement</option>
+                                
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-credit-card mr-1"></i>Mode de paiement
+                            </label>
+                            <select id="modePaiementFilter" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
+                                <option value="">Tous les modes</option>
+                                <option value="espece">Espèce</option>
+                                <option value="cheque">Chèque</option>
+                                <option value="virement">Virement</option>
+                                
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-user mr-1"></i>Fournisseur
+                            </label>
+                            <input type="text" id="fournisseurFilter" placeholder="Nom du fournisseur" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-university mr-1"></i>Banque
+                            </label>
+                            <select id="banqueFilter" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                                <option value="">Choisir la banque</option>
+                                <option value="BEA">BEA</option>
+                                <option value="BDL">BDL</option>
+                                <option value="Albaraka Bank">Albaraka Bank</option>
+                                <option value="AGB">AGB</option>
+                                <option value="Alsalam Bank">Alsalam Bank</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-search mr-1"></i>Recherche
+                            </label>
+                            <input type="text" id="searchFilter" placeholder="Description, observation..." class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-search mr-1"></i>Code opération
+                            </label>
+                            <input type="text" id="codeFilter" placeholder="example : ECH001" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-money-bill mr-1"></i>Montant min
+                            </label>
+                            <input type="number" id="amountMinFilter" placeholder="0" step="0.01" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-money-bill mr-1"></i>Montant max
+                            </label>
+                            <input type="number" id="amountMaxFilter" placeholder="999999" step="0.01" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-receipt mr-1"></i>N° Chèque
+                            </label>
+                            <input type="text" id="chequeFilter" placeholder="Numéro de chèque" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
+                        </div>
+                        
                         <div class="flex items-end">
                             <button id="searchBtn" class="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg transition-colors">
                                 <i class="fas fa-search mr-2"></i>Rechercher

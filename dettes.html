@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Dettes - ERP Génie Civil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes slideIn {
+            0% { transform: translateX(-100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .floating { animation: float 6s ease-in-out infinite; }
+        .slide-in { animation: slideIn 0.8s ease-out; }
+        .loading { animation: pulse 1.5s ease-in-out infinite; }
+        
+        .dette-header-light {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .dette-header-dark {
+            background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .theme-transition {
+            transition: all 0.3s ease;
+        }
+
+        .fa-spin-custom {
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .dette-row {
+            transition: all 0.3s ease;
+        }
+
+        .dette-row:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-2px);
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        }
+    </style>
+</head>
+<body class="theme-transition min-h-screen bg-gray-50 dark:bg-gray-900">
+    <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <button id="backBtn" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-arrow-left text-gray-600 dark:text-gray-300"></i>
+                    </button>
+                    <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-credit-card text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-gray-900 dark:text-white font-bold text-xl">ECH SAHARA</h1>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">Gestion des Dettes</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button id="languageToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" title="Switch Language">
+                        <i class="fas fa-language w-5 h-5 text-gray-600 dark:text-gray-300"></i>
+                    </button>
+                    
+                    <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i id="sunIcon" class="fas fa-sun w-5 h-5 text-gray-600 dark:text-gray-300 hidden dark:block"></i>
+                        <i id="moonIcon" class="fas fa-moon w-5 h-5 text-gray-600 dark:text-gray-300 block dark:hidden"></i>
+                    </button>
+                    
+                    <div class="text-gray-900 dark:text-white text-right">
+                        <p class="font-medium" id="welcomeUser">Bienvenue</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400" id="userRole">Utilisateur</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="loadingState" class="text-center py-12">
+            <i class="fas fa-spinner fa-spin-custom text-red-500 text-6xl"></i>
+            <p class="text-gray-600 dark:text-gray-400 mt-4">Chargement des données des dettes...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div class="mb-8 slide-in">
+                <div class="dette-header-light dark:dette-header-dark rounded-2xl p-8 text-white shadow-2xl floating">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h2 id="mainTitle" class="text-3xl font-bold mb-2">Gestion des Dettes</h2>
+                            <p id="mainSubtitle" class="text-white/80 mb-4">Suivi et gestion de toutes vos dettes</p>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                                <div>
+                                    <p id="totalDettesLabel" class="text-white/80 text-sm">Total Dettes</p>
+                                    <p class="text-xl font-bold" id="totalDettes">0 DZD</p>
+                                </div>
+                                <div>
+                                    <p id="totalRemainingLabel" class="text-white/80 text-sm">Montant Restant</p>
+                                    <p class="text-xl font-bold text-red-300" id="totalRemaining">0 DZD</p>
+                                </div>
+                                <div>
+                                    <p id="activeDettesLabel" class="text-white/80 text-sm">Dettes Actives</p>
+                                    <p class="text-xl font-bold text-orange-300" id="activeDettes">0</p>
+                                </div>
+                                <div>
+                                    <p id="completedDettesLabel" class="text-white/80 text-sm">Dettes Complétées</p>
+                                    <p class="text-xl font-bold text-green-300" id="completedDettes">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-right ml-6">
+                            <div class="flex flex-col space-y-3">
+                                <button id="addDetteBtn" class="btn-success text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+                                    <i class="fas fa-plus mr-1"></i><span id="newDebtBtn">Nouvelle Dette</span>
+                                </button>
+                                
+                            </div>
+                            
+                            <div class="text-6xl opacity-30 mt-4">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                        <h3 id="filtersTitle" class="text-lg font-semibold text-gray-900 dark:text-white">
+                            <i class="fas fa-filter text-red-500 mr-2"></i>Filtres
+                        </h3>
+                        <button id="resetFiltersBtn" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                            <span id="resetBtn"><i class="fas fa-refresh mr-1"></i>Réinitialiser</span>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label id="statusFilterLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Statut</label>
+                            <select id="statusFilter" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                <option value="">Tous les statuts</option>
+                                <option value="active">Actives</option>
+                                <option value="completed">Complétées</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label id="creditorFilterLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Créditeur</label>
+                            <input type="text" id="creditorFilter" placeholder="Nom du créditeur..." class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Créditeur</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Montant Original</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Montant Restant</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Progression</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Statut</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date Création</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dettesList" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="emptyState" class="text-center py-12 hidden">
+                    <i class="fas fa-credit-card text-gray-400 text-6xl mb-4"></i>
+                    <h3 id="emptyStateTitle" class="text-lg font-medium text-gray-900 dark:text-white mb-2">Aucune dette trouvée</h3>
+                    <p id="emptyStateDesc" class="text-gray-600 dark:text-gray-400 mb-4">Commencez par ajouter votre première dette</p>
+                    <button id="addFirstDetteBtn" class="btn-primary text-white px-4 py-2 rounded-lg transition-all duration-300">
+                        <span id="emptyStateBtn"><i class="fas fa-plus mr-2"></i>Ajouter une dette</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Dette Modal -->
+    <div id="addDetteModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black opacity-50"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 id="addModalTitle" class="text-lg font-semibold text-gray-900 dark:text-white">Nouvelle Dette</h3>
+                    <button id="closeAddModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form id="addDetteForm" class="space-y-4">
+                    <div>
+                        <label id="creditorNameLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom du Créditeur *</label>
+                        <input type="text" id="creditorName" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                    </div>
+
+                    <div>
+                        <label id="amountLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Montant (DZD) *</label>
+                        <input type="number" id="originalAmount" step="0.01" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                    </div>
+
+                    <div>
+                        <label id="descriptionLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                        <textarea id="description" rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white"></textarea>
+                    </div>
+
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" id="saveBtn" class="flex-1 btn-success text-white py-2 px-4 rounded-lg transition-all duration-300">
+                            <i class="fas fa-save mr-2"></i>Enregistrer
+                        </button>
+                        <button type="button" id="cancelAdd" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg transition-colors">
+                            <span id="cancelBtn"><i class="fas fa-times mr-2"></i>Annuler</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dette Detail Modal -->
+    <div id="detteDetailModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black opacity-50"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full p-6 shadow-xl max-h-screen overflow-y-auto">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 id="detailModalTitle" class="text-lg font-semibold text-gray-900 dark:text-white">Détails de la Dette</h3>
+                    <button id="closeDetailModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div id="detteDetailContent">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black opacity-50"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 id="paymentModalTitle" class="text-lg font-semibold text-gray-900 dark:text-white">Nouveau Paiement</h3>
+                    <button id="closePaymentModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form id="paymentForm" class="space-y-4">
+                    <input type="hidden" id="paymentDetteId">
+                    
+                    <div>
+                        <label id="paymentAmountLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Montant à Payer (DZD) *</label>
+                        <input type="number" id="paymentAmount" step="0.01" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        <p class="text-sm text-gray-500 mt-1">Montant restant: <span id="remainingAmountDisplay">0</span> DZD</p>
+                    </div>
+
+                    <div>
+                        <label id="paymentModeLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mode de Paiement *</label>
+                        <select id="paymentMode" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                            <option value="">Sélectionner...</option>
+                            <option value="especes">Espèces</option>
+                            <option value="cheque">Chèque</option>
+                            <option value="virement">Virement</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                    </div>
+
+                    <div id="bankFields" class="hidden space-y-4">
+                        <div>
+                            <label id="supplierNameLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom Fournisseur</label>
+                            <input type="text" id="nomFournisseur" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div>
+                            <label id="bankLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Banque</label>
+                            <input type="text" id="banque" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div>
+                            <label id="checkNumberLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Numéro Chèque</label>
+                            <input type="text" id="numeroCheque" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label id="paymentDescLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                        <textarea id="paymentDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white"></textarea>
+                    </div>
+
+                    <div>
+                        <label id="proofFileLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fichier Preuve (Optionnel)</label>
+                        <input type="file" id="paymentFile" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                    </div>
+
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" id="makePaymentBtn" class="flex-1 btn-success text-white py-2 px-4 rounded-lg transition-all duration-300">
+                            <i class="fas fa-save mr-2"></i>Effectuer Paiement
+                        </button>
+                        <button type="button" id="cancelPayment" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg transition-colors">
+                            <span id="cancelPaymentBtn"><i class="fas fa-times mr-2"></i>Annuler</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Messages -->
+    <div id="errorToast" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <span id="errorMessage">Une erreur s'est produite</span>
+        </div>
+    </div>
+
+    <div id="successToast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span id="successMessage">Opération réussie</span>
+        </div>
+    </div>
+
+    <script src="api/dettes.js"></script>
+</body>
+</html>

@@ -105,6 +105,14 @@
             background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
             transform: translateY(-2px);
         }
+        .accreance-btn {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    }
+
+    .accreance-btn:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        transform: translateY(-2px);
+    }
     </style>
 </head>
 <body class="theme-transition min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -168,11 +176,11 @@
                                     <p class="text-xl font-bold text-red-300" id="totalDepenses">0 DZD</p>
                                 </div>
                                 <div>
-                                    <p class="text-white/80 text-sm">Total Reçus</p>
+                                    <p class="text-white/80 text-sm">Total Accreance</p>
                                     <p class="text-xl font-bold text-green-300" id="totalRecus">0 DZD</p>
                                 </div>
                                 <div>
-                                    <p class="text-white/80 text-sm">Sold</p>
+                                    <p class="text-white/80 text-sm">Benifices</p>
                                     <p class="text-xl font-bold text-yellow-300" id="totalBenefices">0 DZD</p>
                                 </div>
                             </div>
@@ -191,6 +199,9 @@
                                 <button id="historyBtn" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all duration-300">
                                     <i class="fas fa-history mr-1"></i>Historique
                                 </button>
+                                <button id="accreanceBtn" class="accreance-btn text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+                                    <i class="fas fa-money-bill-wave mr-1"></i>Accréance
+                                </button>
                             </div>
                             
                             <div class="text-6xl opacity-30 mt-4">
@@ -205,9 +216,19 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <!-- Basic Information -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                        <i class="fas fa-info-circle text-blue-500 mr-2"></i>Informations Générales
-                    </h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                            <i class="fas fa-info-circle text-blue-500 mr-2"></i>Informations Générales
+                        </h3>
+                        
+                        <!-- PDF Print Button -->
+                        <button id="printPdfBtn" 
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 transition-colors duration-200"
+                                onclick="generateProjectPdf()">
+                            <i class="fas fa-file-pdf mr-2"></i>
+                            Imprimer PDF
+                        </button>
+                    </div>
                     
                     <div class="space-y-3">
                         <div>
@@ -230,9 +251,41 @@
                             <p class="text-sm text-gray-600 dark:text-gray-400">Collaborateur</p>
                             <p class="font-medium text-gray-900 dark:text-white" id="collaboratorName">--</p>
                         </div>
+                        
+                        <!-- Add Files Section -->
+                        <div class="pt-4 border-t border-gray-200 dark:border-gray-600">
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Fichiers du Projet</p>
+                            <div class="flex flex-wrap gap-2">
+                                <!-- Contract File Button -->
+                                <button id="downloadContractBtn" 
+                                        class="hidden inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300">
+                                    <i class="fas fa-file-contract mr-2"></i>
+                                    Télécharger Contrat
+                                </button>
+                                
+                                <!-- ODS File Button -->
+                                <button id="downloadOdsBtn" 
+                                        class="hidden inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300">
+                                    <i class="fas fa-file-excel mr-2"></i>
+                                    Télécharger ODS
+                                </button>
+                                
+                                <!-- Upload Alert Buttons -->
+                                <button id="uploadContractAlert" 
+                                        class="hidden inline-flex items-center px-3 py-2 text-sm font-medium text-orange-600 bg-orange-100 rounded-lg hover:bg-orange-200 focus:ring-4 focus:outline-none focus:ring-orange-300">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    Contrat manquant
+                                </button>
+                                
+                                <button id="uploadOdsAlert" 
+                                        class="hidden inline-flex items-center px-3 py-2 text-sm font-medium text-orange-600 bg-orange-100 rounded-lg hover:bg-orange-200 focus:ring-4 focus:outline-none focus:ring-orange-300">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    Fichier ODS manquant
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
                 <!-- Creation Information -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -258,42 +311,150 @@
     <div id="editModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
         <div class="flex items-center justify-center min-h-screen px-4">
             <div class="fixed inset-0 bg-black opacity-50"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-xl">
-                <div class="flex items-center justify-between mb-4">
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full shadow-xl">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Modifier le Projet</h3>
-                    <button id="closeEditModal" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times"></i>
+                    <button id="closeEditModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
 
-                <form id="editProjectForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom du Projet</label>
-                        <input type="text" id="editProjectName" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                <!-- Progress Indicator -->
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Étape <span id="currentStep">1</span> sur 3</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400" id="stepTitle">Informations Générales</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div id="progressBar" class="bg-orange-500 h-2 rounded-full transition-all duration-300" style="width: 33.33%"></div>
+                    </div>
+                </div>
+
+                <!-- Form Content -->
+                <form id="editProjectForm" class="space-y-4" enctype="multipart/form-data">
+                    <div class="p-6">
+                        <!-- Step 1: General Information -->
+                        <div id="step1" class="carousel-step">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        <i class="fas fa-project-diagram mr-2 text-orange-500"></i>Nom du Projet
+                                    </label>
+                                    <input type="text" id="editProjectName" required
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        <i class="fas fa-align-left mr-2 text-orange-500"></i>Description
+                                    </label>
+                                    <textarea id="editProjectDescription" rows="4"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        <i class="fas fa-money-bill-wave mr-2 text-orange-500"></i>Budget Estimé (DZD)
+                                    </label>
+                                    <input type="number" id="editEstimatedBudget" min="0" step="0.01"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Operation Details -->
+                        <div id="step2" class="carousel-step hidden">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        <i class="fas fa-cogs mr-2 text-orange-500"></i>Opération
+                                    </label>
+                                    <input type="text" id="editOperation"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        <i class="fas fa-hashtag mr-2 text-orange-500"></i>Numéro d'Opération
+                                    </label>
+                                    <input type="text" id="editNumeroOperation"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        <i class="fas fa-user-tie mr-2 text-orange-500"></i>Nom du Collaborateur
+                                    </label>
+                                    <input type="text" id="editCollaboratorName"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: File Uploads -->
+                        <div id="step3" class="carousel-step hidden">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        <i class="fas fa-file-contract mr-2 text-orange-500"></i>Fichier de Contrat
+                                    </label>
+                                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:border-orange-400 transition-colors">
+                                        <div class="space-y-1 text-center">
+                                            <i class="fas fa-cloud-upload-alt text-3xl text-gray-400"></i>
+                                            <div class="flex text-sm text-gray-600 dark:text-gray-400">
+                                                <label for="editContractFile" class="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-orange-600 hover:text-orange-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-orange-500">
+                                                    <span>Télécharger un fichier</span>
+                                                    <input id="editContractFile" name="editContractFile" type="file" accept=".pdf,.doc,.docx" class="sr-only">
+                                                </label>
+                                                <p class="pl-1">ou glisser-déposer</p>
+                                            </div>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">PDF, DOC, DOCX jusqu'à 10MB</p>
+                                        </div>
+                                    </div>
+                                    <div id="contractFileName" class="mt-2 text-sm text-gray-600 dark:text-gray-400 hidden"></div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        <i class="fas fa-file-excel mr-2 text-orange-500"></i>Fichier ODS
+                                    </label>
+                                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:border-orange-400 transition-colors">
+                                        <div class="space-y-1 text-center">
+                                            <i class="fas fa-cloud-upload-alt text-3xl text-gray-400"></i>
+                                            <div class="flex text-sm text-gray-600 dark:text-gray-400">
+                                                <label for="editOdsFile" class="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-orange-600 hover:text-orange-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-orange-500">
+                                                    <span>Télécharger un fichier</span>
+                                                    <input id="editOdsFile" name="editOdsFile" type="file" accept=".ods,.xls,.xlsx" class="sr-only">
+                                                </label>
+                                                <p class="pl-1">ou glisser-déposer</p>
+                                            </div>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">ODS, XLS, XLSX jusqu'à 10MB</p>
+                                        </div>
+                                    </div>
+                                    <div id="odsFileName" class="mt-2 text-sm text-gray-600 dark:text-gray-400 hidden"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-                        <textarea id="editProjectDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"></textarea>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Budget Estimé (DZD)</label>
-                        <input type="number" id="editEstimatedBudget" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom du Collaborateur</label>
-                        <input type="text" id="editCollaboratorName" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
-                    </div>
-
-                    <div class="flex space-x-3 pt-4">
-                        <button type="submit" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg transition-colors">
-                            <i class="fas fa-save mr-2"></i>Enregistrer
+                    <!-- Navigation Buttons -->
+                    <div class="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700">
+                        <button type="button" id="prevBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="fas fa-arrow-left mr-2"></i>Précédent
                         </button>
-                        <button type="button" id="cancelEdit" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg transition-colors">
-                            <i class="fas fa-times mr-2"></i>Annuler
-                        </button>
+                        
+                        <div class="flex space-x-2">
+                            <button type="button" id="cancelEdit" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                <i class="fas fa-times mr-2"></i>Annuler
+                            </button>
+                            <button type="button" id="nextBtn" class="px-4 py-2 text-sm font-medium text-white bg-orange-500 border border-transparent rounded-lg hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                                Suivant<i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                            <button type="submit" id="submitBtn" class="px-4 py-2 text-sm font-medium text-white bg-green-500 border border-transparent rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 hidden">
+                                <i class="fas fa-save mr-2"></i>Enregistrer
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -301,80 +462,103 @@
     </div>
 
     <!-- Collaborator Modal -->
-    <div id="collaboratorModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen px-4">
-            <div class="fixed inset-0 bg-black opacity-50"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full shadow-xl">
-                <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                        <i class="fas fa-users text-green-500 mr-2"></i>Opérations du Collaborateur
-                    </h3>
-                    <button id="closeCollaboratorModal" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times"></i>
+    <!-- Collaborator Modal -->
+<div id="collaboratorModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black opacity-50"></div>
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full shadow-xl">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    <i class="fas fa-users text-green-500 mr-2"></i>Opérations du Collaborateur
+                </h3>
+                <div class="flex items-center space-x-3">
+                    <!-- PDF Export Button for Collaborator -->
+                    <button
+                        id="exportCollaboratorPDF"
+                        class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                        title="Exporter les opérations du collaborateur en PDF">
+                        <i class="fas fa-file-pdf mr-2"></i>
+                        Exporter PDF
+                    </button>
+                    <!-- Close Button -->
+                    <button id="closeCollaboratorModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none">
+                        <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
+            </div>
 
-                <div class="modal-content p-6">
-                    <!-- Collaborator Stats -->
-                    <div class="grid grid-cols-3 gap-4 mb-6">
-                        <div class="bg-green-100 dark:bg-green-900 rounded-lg p-4 text-center">
-                            <i class="fas fa-arrow-up text-green-600 dark:text-green-300 text-2xl mb-2"></i>
-                            <p class="text-sm text-green-600 dark:text-green-300">Total Reçus</p>
-                            <p class="text-xl font-bold text-green-700 dark:text-green-200" id="collaboratorRecus">0 DZD</p>
-                        </div>
-                        <div class="bg-red-100 dark:bg-red-900 rounded-lg p-4 text-center">
-                            <i class="fas fa-arrow-down text-red-600 dark:text-red-300 text-2xl mb-2"></i>
-                            <p class="text-sm text-red-600 dark:text-red-300">Total Dépenses</p>
-                            <p class="text-xl font-bold text-red-700 dark:text-red-200" id="collaboratorDepenses">0 DZD</p>
-                        </div>
-                        <div class="bg-blue-100 dark:bg-blue-900 rounded-lg p-4 text-center">
-                            <i class="fas fa-calculator text-blue-600 dark:text-blue-300 text-2xl mb-2"></i>
-                            <p class="text-sm text-blue-600 dark:text-blue-300">Total Opérations</p>
-                            <p class="text-xl font-bold text-blue-700 dark:text-blue-200" id="collaboratorOperations">0</p>
-                        </div>
+            <div class="modal-content p-6">
+                <!-- Collaborator Stats -->
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="bg-green-100 dark:bg-green-900 rounded-lg p-4 text-center">
+                        <i class="fas fa-arrow-up text-green-600 dark:text-green-300 text-2xl mb-2"></i>
+                        <p class="text-sm text-green-600 dark:text-green-300">Total Reçus</p>
+                        <p class="text-xl font-bold text-green-700 dark:text-green-200" id="collaboratorRecus">0 DZD</p>
                     </div>
+                    <div class="bg-red-100 dark:bg-red-900 rounded-lg p-4 text-center">
+                        <i class="fas fa-arrow-down text-red-600 dark:text-red-300 text-2xl mb-2"></i>
+                        <p class="text-sm text-red-600 dark:text-red-300">Total Dépenses</p>
+                        <p class="text-xl font-bold text-red-700 dark:text-red-200" id="collaboratorDepenses">0 DZD</p>
+                    </div>
+                    <div class="bg-blue-100 dark:bg-blue-900 rounded-lg p-4 text-center">
+                        <i class="fas fa-calculator text-blue-600 dark:text-blue-300 text-2xl mb-2"></i>
+                        <p class="text-sm text-blue-600 dark:text-blue-300">Total Opérations</p>
+                        <p class="text-xl font-bold text-blue-700 dark:text-blue-200" id="collaboratorOperations">0</p>
+                    </div>
+                </div>
 
-                    <!-- Collaborator Operations List -->
-                    <div id="collaboratorOperationsList" class="space-y-3">
-                        <!-- Operations will be loaded here -->
-                    </div>
+                <!-- Collaborator Operations List -->
+                <div id="collaboratorOperationsList" class="space-y-3">
+                    <!-- Operations will be loaded here -->
+                </div>
 
-                    <div id="noCollaboratorOperations" class="text-center py-8 hidden">
-                        <i class="fas fa-inbox text-gray-400 text-4xl mb-4"></i>
-                        <p class="text-gray-600 dark:text-gray-400">Aucune opération du collaborateur trouvée</p>
-                    </div>
+                <div id="noCollaboratorOperations" class="text-center py-8 hidden">
+                    <i class="fas fa-inbox text-gray-400 text-4xl mb-4"></i>
+                    <p class="text-gray-600 dark:text-gray-400">Aucune opération du collaborateur trouvée</p>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- History Modal -->
-    <div id="historyModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen px-4">
-            <div class="fixed inset-0 bg-black opacity-50"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full shadow-xl">
-                <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                        <i class="fas fa-history text-blue-500 mr-2"></i>Historique du Projet
-                    </h3>
-                    <button id="closeHistoryModal" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times"></i>
+<!-- History Modal -->
+<div id="historyModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black opacity-50"></div>
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full shadow-xl">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    <i class="fas fa-history text-blue-500 mr-2"></i>Historique du Projet
+                </h3>
+                <div class="flex items-center space-x-3">
+                    <!-- PDF Export Button for History -->
+                    <button
+                        id="exportHistoryPDF"
+                        class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                        title="Exporter l'historique du projet en PDF">
+                        <i class="fas fa-file-pdf mr-2"></i>
+                        Exporter PDF
+                    </button>
+                    <!-- Close Button -->
+                    <button id="closeHistoryModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none">
+                        <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
+            </div>
 
-                <div class="modal-content p-6">
-                    <div id="historyList" class="space-y-4">
-                        <!-- History items will be loaded here -->
-                    </div>
+            <div class="modal-content p-6">
+                <div id="historyList" class="space-y-4">
+                    <!-- History items will be loaded here -->
+                </div>
 
-                    <div id="noHistory" class="text-center py-8 hidden">
-                        <i class="fas fa-clock text-gray-400 text-4xl mb-4"></i>
-                        <p class="text-gray-600 dark:text-gray-400">Aucun historique trouvé</p>
-                    </div>
+                <div id="noHistory" class="text-center py-8 hidden">
+                    <i class="fas fa-clock text-gray-400 text-4xl mb-4"></i>
+                    <p class="text-gray-600 dark:text-gray-400">Aucun historique trouvé</p>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
     <!-- Toast Messages -->
     <div id="errorToast" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">

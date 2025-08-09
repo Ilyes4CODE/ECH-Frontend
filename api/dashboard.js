@@ -125,11 +125,20 @@ function formatDate(dateString) {
     });
 }
 
-function formatNumber(number) {
-    return new Intl.NumberFormat('fr-FR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(number);
+function formatNumber(amount) {
+    // Convert to number if it's a string
+    const numAmount = parseFloat(amount);
+    
+    // Check if it's a valid number
+    if (isNaN(numAmount)) {
+        return '0';
+    }
+    
+    // Format the number with commas as thousand separators and dot as decimal separator
+    return numAmount.toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+    });
 }
 
 async function fetchCaisseStatus() {
@@ -207,11 +216,11 @@ function displayProjects(projects) {
                     <p class="text-sm font-medium text-red-600 dark:text-red-400">${formatNumber(project.total_depenses)}</p>
                 </div>
                 <div class="text-center">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Reçus</p>
-                    <p class="text-sm font-medium text-green-600 dark:text-green-400">${formatNumber(project.total_recus)}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Accreance</p>
+                    <p class="text-sm font-medium text-green-600 dark:text-green-400">${formatNumber(project.total_accreance)}</p>
                 </div>
                 <div class="text-center">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Sold</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Benifices</p>
                     <p class="text-sm font-medium text-blue-600 dark:text-blue-400">${formatNumber(project.total_benefices)}</p>
                 </div>
             </div>
@@ -251,13 +260,18 @@ function viewProjectDetails(projectId) {
 
 async function fetchCaisseHistory() {
     try {
-        const endpoint = validateApiEndpoint('caisse/operations/');
+        const endpoint = validateApiEndpoint('caisse/history/');
         const headers = getApiHeaders();
         
         console.log('Fetching caisse history from:', endpoint);
         console.log('Using headers:', headers);
         
-        const response = await fetch(endpoint, {
+        // Add query parameters to get latest 2 records
+        const url = new URL(endpoint);
+        url.searchParams.append('page_size', '2');
+        url.searchParams.append('ordering', '-created_at');
+        
+        const response = await fetch(url, {
             method: 'GET',
             headers: headers
         });
@@ -283,15 +297,14 @@ async function fetchCaisseHistory() {
         const data = await response.json();
         console.log('Received data:', data);
         
-        // Validate data structure
-        if (!Array.isArray(data)) {
+        // Validate data structure - the DRF function returns an object with 'results' array
+        if (!data || !Array.isArray(data.results)) {
             throw new Error('Format de données invalide');
         }
         
-        const lastTwo = data.slice(0, 2);
         // Store in memory instead of localStorage for this session
-        window.lastOperations = lastTwo;
-        displayLastOperations(lastTwo);
+        window.lastOperations = data.results;
+        displayLastOperations(data.results);
         
     } catch (error) {
         console.error('Error in fetchCaisseHistory:', error);
@@ -311,6 +324,66 @@ async function fetchCaisseHistory() {
     }
 }
 
+
+function showHistoryPopup() {
+    fetchCaisseHistory().then(() => {
+        const historyEntries = window.lastOperations || [];
+        
+        // Create popup
+        const { popup, closePopup } = createHistoryPopup();
+        
+        // Add popup to DOM
+        document.body.appendChild(popup);
+        
+        // Add event listeners after popup is added to DOM
+        popup.addEventListener('click', (e) => {
+            if (e.target === popup) {
+                closePopup();
+            }
+        });
+        
+        const closeButton = popup.querySelector('#close-popup');
+        const closeBtnButton = popup.querySelector('#close-popup-btn');
+        const viewAllButton = popup.querySelector('#view-all-btn');
+        
+        if (closeButton) {
+            closeButton.addEventListener('click', closePopup);
+        }
+        
+        if (closeBtnButton) {
+            closeBtnButton.addEventListener('click', closePopup);
+        }
+        
+        if (viewAllButton) {
+            viewAllButton.addEventListener('click', () => {
+                closePopup();
+                window.location.href = 'caisse-history.html';
+            });
+        }
+        
+        // Render history entries
+        const contentDiv = popup.querySelector('#popup-content');
+        if (contentDiv) {
+            contentDiv.innerHTML = renderHistoryEntries(historyEntries);
+        }
+        
+        // Add animation
+        requestAnimationFrame(() => {
+            popup.style.opacity = '0';
+            popup.style.transform = 'scale(0.95)';
+            popup.style.transition = 'all 0.3s ease';
+            
+            requestAnimationFrame(() => {
+                popup.style.opacity = '1';
+                popup.style.transform = 'scale(1)';
+            });
+        });
+    }).catch(error => {
+        console.error('Error showing history popup:', error);
+        // Show error popup or message
+        showError('Erreur lors du chargement de l\'historique');
+    });
+}
 function createHistoryPopup() {
     // Create popup container
     const popup = document.createElement('div');
@@ -364,8 +437,200 @@ function createHistoryPopup() {
     // Return popup and closePopup function
     return { popup, closePopup };
 }
-
-
+function renderHistoryEntries(historyEntries) {
+    if (!historyEntries || historyEntries.length === 0) {
+        return `
+            <div class="text-center py-8">
+                <div class="text-gray-400 mb-4">
+                    <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                </div>
+                <p class="text-gray-500 dark:text-gray-400">Aucune opération récente trouvée</p>
+            </div>
+        `;
+    }
+    
+    return historyEntries.map(entry => {
+        // Get action type and styling
+        const getActionInfo = (action) => {
+            switch(action) {
+                case 'CREDIT':
+                    return { 
+                        icon: '↗', 
+                        text: 'Crédit', 
+                        bgColor: 'bg-green-100 dark:bg-green-900', 
+                        textColor: 'text-green-800 dark:text-green-200',
+                        iconColor: 'text-green-600 dark:text-green-400'
+                    };
+                case 'DEBIT':
+                    return { 
+                        icon: '↙', 
+                        text: 'Débit', 
+                        bgColor: 'bg-red-100 dark:bg-red-900', 
+                        textColor: 'text-red-800 dark:text-red-200',
+                        iconColor: 'text-red-600 dark:text-red-400'
+                    };
+                default:
+                    return { 
+                        icon: '•', 
+                        text: action, 
+                        bgColor: 'bg-gray-100 dark:bg-gray-700', 
+                        textColor: 'text-gray-800 dark:text-gray-200',
+                        iconColor: 'text-gray-600 dark:text-gray-400'
+                    };
+            }
+        };
+        
+        const actionInfo = getActionInfo(entry.action);
+        
+        return `
+            <div class="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <!-- Header -->
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-2 px-3 py-1 rounded-full ${actionInfo.bgColor}">
+                            <span class="text-lg ${actionInfo.iconColor}">${actionInfo.icon}</span>
+                            <span class="font-medium ${actionInfo.textColor}">${actionInfo.text}</span>
+                        </div>
+                        ${entry.numero ? `<span class="text-sm text-gray-500 dark:text-gray-400">#${entry.numero}</span>` : ''}
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xl font-bold text-gray-900 dark:text-white">
+                            ${typeof formatNumber === 'function' ? formatNumber(entry.amount) : entry.amount} DZD
+                        </div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                            ${typeof formatDate === 'function' ? formatDate(entry.date) : entry.date}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Description -->
+                ${entry.description ? `
+                    <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <p class="text-gray-700 dark:text-gray-300">${entry.description}</p>
+                    </div>
+                ` : ''}
+                
+                <!-- Balance Information -->
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="text-center p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                        <div class="text-sm text-blue-600 dark:text-blue-400 font-medium">Solde avant</div>
+                        <div class="text-lg font-bold text-blue-800 dark:text-blue-200">
+                            ${typeof formatNumber === 'function' ? formatNumber(entry.balance_before) : entry.balance_before} DZD
+                        </div>
+                    </div>
+                    <div class="text-center p-3 bg-purple-50 dark:bg-purple-900 rounded-lg">
+                        <div class="text-sm text-purple-600 dark:text-purple-400 font-medium">Solde après</div>
+                        <div class="text-lg font-bold text-purple-800 dark:text-purple-200">
+                            ${typeof formatNumber === 'function' ? formatNumber(entry.balance_after) : entry.balance_after} DZD
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- User and Project Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    ${entry.user ? `
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Utilisateur:</span>
+                            <span class="text-sm text-gray-900 dark:text-white">
+                                ${entry.user.first_name || ''} ${entry.user.last_name || ''} (${entry.user.username})
+                            </span>
+                        </div>
+                    ` : ''}
+                    
+                    ${entry.project ? `
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Projet:</span>
+                            <span class="text-sm text-gray-900 dark:text-white">${entry.project.name}</span>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <!-- Operation Details (if exists) -->
+                ${entry.operation ? `
+                    <div class="mt-4 border-t border-gray-200 dark:border-gray-600 pt-4">
+                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Détails de l'opération</h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <span class="font-medium text-gray-600 dark:text-gray-400">Type:</span>
+                                <span class="ml-2 text-gray-900 dark:text-white">${entry.operation.operation_type}</span>
+                            </div>
+                            
+                            ${entry.operation.mode_paiement ? `
+                                <div>
+                                    <span class="font-medium text-gray-600 dark:text-gray-400">Mode de paiement:</span>
+                                    <span class="ml-2 text-gray-900 dark:text-white">${entry.operation.mode_paiement}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${entry.operation.income_source ? `
+                                <div>
+                                    <span class="font-medium text-gray-600 dark:text-gray-400">Source de revenu:</span>
+                                    <span class="ml-2 text-gray-900 dark:text-white">${entry.operation.income_source}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${entry.operation.bank_name ? `
+                                <div>
+                                    <span class="font-medium text-gray-600 dark:text-gray-400">Banque:</span>
+                                    <span class="ml-2 text-gray-900 dark:text-white">${entry.operation.bank_name}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${entry.operation.nom_fournisseur ? `
+                                <div>
+                                    <span class="font-medium text-gray-600 dark:text-gray-400">Fournisseur:</span>
+                                    <span class="ml-2 text-gray-900 dark:text-white">${entry.operation.nom_fournisseur}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${entry.operation.numero_cheque ? `
+                                <div>
+                                    <span class="font-medium text-gray-600 dark:text-gray-400">N° Chèque:</span>
+                                    <span class="ml-2 text-gray-900 dark:text-white">${entry.operation.numero_cheque}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${entry.operation.by_collaborator ? `
+                                <div>
+                                    <span class="font-medium text-gray-600 dark:text-gray-400">Par collaborateur:</span>
+                                    <span class="ml-2 text-green-600 dark:text-green-400">Oui</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        ${entry.operation.observation ? `
+                            <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg">
+                                <span class="font-medium text-yellow-800 dark:text-yellow-200">Observation:</span>
+                                <p class="mt-1 text-yellow-700 dark:text-yellow-300">${entry.operation.observation}</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${entry.operation.preuve_file ? `
+                            <div class="mt-3">
+                                <a href="${entry.operation.preuve_file}" target="_blank" 
+                                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 border border-blue-300 dark:border-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                    </svg>
+                                    Voir la preuve
+                                </a>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+}
 function renderOperations(operations) {
     if (operations.length === 0) {
         return `
@@ -500,7 +765,7 @@ function debugApiCall() {
         console.error('Debug fetch error:', error);
     });
 }
-function displayLastOperations(operations) {
+function displayLastOperations(historyEntries) {
     const historyContainer = document.getElementById('historyContainer');
     
     // Check if the element exists before trying to modify it
@@ -510,7 +775,7 @@ function displayLastOperations(operations) {
         return;
     }
     
-    if (operations.length === 0) {
+    if (historyEntries.length === 0) {
         historyContainer.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">
@@ -527,34 +792,163 @@ function displayLastOperations(operations) {
     }
     
     try {
-        historyContainer.innerHTML = operations.map(op => `
-            <div class="operation-item">
-                <div class="operation-header">
-                    <div class="operation-type">
-                        <span class="type-icon">
-                            ${op.operation_type === 'encaissement' ? '↗' : '↙'}
-                        </span>
-                        <span class="type-text">
-                            ${op.operation_type === 'encaissement' ? 'Encaissement' : 'Décaissement'}
-                        </span>
+        historyContainer.innerHTML = historyEntries.map(entry => {
+            // Get action type and color
+            const getActionInfo = (action) => {
+                switch(action) {
+                    case 'CREDIT':
+                        return { icon: '↗', text: 'Crédit', color: 'success' };
+                    case 'DEBIT':
+                        return { icon: '↙', text: 'Débit', color: 'danger' };
+                    default:
+                        return { icon: '•', text: action, color: 'secondary' };
+                }
+            };
+            
+            const actionInfo = getActionInfo(entry.action);
+            
+            return `
+                <div class="history-item">
+                    <div class="history-header">
+                        <div class="history-action ${actionInfo.color}">
+                            <span class="action-icon">${actionInfo.icon}</span>
+                            <span class="action-text">${actionInfo.text}</span>
+                        </div>
+                        <div class="history-amount">
+                            ${formatNumber ? formatNumber(entry.amount) : entry.amount} DZD
+                        </div>
                     </div>
-                    <div class="operation-amount">
-                        ${formatNumber ? formatNumber(op.amount) : op.amount} DZD
+                    
+                    <div class="history-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Numéro:</span>
+                            <span class="detail-value">${entry.numero || 'N/A'}</span>
+                        </div>
+                        
+                        ${entry.description ? `
+                            <div class="detail-row">
+                                <span class="detail-label">Description:</span>
+                                <span class="detail-value">${entry.description}</span>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="detail-row">
+                            <span class="detail-label">Solde avant:</span>
+                            <span class="detail-value">${formatNumber ? formatNumber(entry.balance_before) : entry.balance_before} DZD</span>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <span class="detail-label">Solde après:</span>
+                            <span class="detail-value">${formatNumber ? formatNumber(entry.balance_after) : entry.balance_after} DZD</span>
+                        </div>
+                        
+                        ${entry.user ? `
+                            <div class="detail-row">
+                                <span class="detail-label">Utilisateur:</span>
+                                <span class="detail-value">${entry.user.first_name || ''} ${entry.user.last_name || ''} (${entry.user.username})</span>
+                            </div>
+                        ` : ''}
+                        
+                        ${entry.project ? `
+                            <div class="detail-row">
+                                <span class="detail-label">Projet:</span>
+                                <span class="detail-value">${entry.project.name}</span>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="detail-row">
+                            <span class="detail-label">Date:</span>
+                            <span class="detail-value">${formatDate ? formatDate(entry.date) : entry.date}</span>
+                        </div>
                     </div>
+                    
+                    ${entry.operation ? `
+                        <div class="operation-details">
+                            <div class="operation-header-detail">
+                                <h4>Détails de l'opération</h4>
+                            </div>
+                            
+                            <div class="detail-row">
+                                <span class="detail-label">Type d'opération:</span>
+                                <span class="detail-value">${entry.operation.operation_type}</span>
+                            </div>
+                            
+                            ${entry.operation.mode_paiement ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Mode de paiement:</span>
+                                    <span class="detail-value">${entry.operation.mode_paiement}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${entry.operation.income_source ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Source de revenu:</span>
+                                    <span class="detail-value">${entry.operation.income_source}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${entry.operation.bank_name ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Banque:</span>
+                                    <span class="detail-value">${entry.operation.bank_name}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${entry.operation.nom_fournisseur ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Fournisseur:</span>
+                                    <span class="detail-value">${entry.operation.nom_fournisseur}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${entry.operation.numero_cheque ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Numéro de chèque:</span>
+                                    <span class="detail-value">${entry.operation.numero_cheque}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${entry.operation.by_collaborator ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Par collaborateur:</span>
+                                    <span class="detail-value">Oui</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${entry.operation.observation ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Observation:</span>
+                                    <span class="detail-value">${entry.operation.observation}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${entry.operation.preuve_file ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Preuve:</span>
+                                    <span class="detail-value">
+                                        <a href="${entry.operation.preuve_file}" target="_blank" class="file-link">
+                                            Voir le fichier
+                                        </a>
+                                    </span>
+                                </div>
+                            ` : ''}
+                            
+                            ${entry.operation.dette ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Dette ID:</span>
+                                    <span class="detail-value">${entry.operation.dette.id}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    ` : ''}
                 </div>
-                <div class="operation-description">
-                    ${op.description || 'Aucune description'}
-                </div>
-                <div class="operation-date">
-                    ${formatDate ? formatDate(op.created_at) : op.created_at}
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     } catch (error) {
-        console.error('Error rendering operations:', error);
+        console.error('Error rendering history entries:', error);
         historyContainer.innerHTML = `
             <div class="error-state">
-                <p>Erreur lors de l'affichage des opérations</p>
+                <p>Erreur lors de l'affichage de l'historique</p>
             </div>
         `;
     }
@@ -575,7 +969,7 @@ function showUpdateCaisseModal() {
                 </select>
             </div>
             
-            <div>
+            <div id="projectContainer" style="display: none;">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Projet</label>
                 <select id="projectSelect" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
                     <option value="">Choisir un projet</option>
@@ -588,7 +982,7 @@ function showUpdateCaisseModal() {
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date</label>
-                <input type="date" id="date" step="0.01" placeholder="La Date" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                <input type="date" id="date" placeholder="La Date" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
@@ -611,6 +1005,7 @@ function showUpdateCaisseModal() {
     
     document.getElementById('nextBtn').addEventListener('click', validateAndProceedStep1);
 }
+
 function validateAndProceedStep1() {
     const operationType = document.getElementById('operationType').value;
     const projectId = document.getElementById('projectSelect').value;
@@ -618,8 +1013,15 @@ function validateAndProceedStep1() {
     const description = document.getElementById('description').value;
     const date = document.getElementById('date').value;
     
-    if (!operationType || !amount || !projectId ) {
+    // Basic validation
+    if (!operationType || !amount) {
         showValidationError('Veuillez remplir tous les champs obligatoires');
+        return;
+    }
+    
+    // Project validation for decaissement (always required)
+    if (operationType === 'decaissement' && !projectId) {
+        showValidationError('Project ID is required for decaissement');
         return;
     }
     
@@ -631,15 +1033,39 @@ function validateAndProceedStep1() {
             return;
         }
         
-        if (incomeSource === 'personnelle' && !document.getElementById('bankName')?.value) {
-            showValidationError('Veuillez sélectionner la banque');
+        // Project required only for collaborator source
+        if (incomeSource === 'collaborator' && !projectId) {
+            showValidationError('Veuillez sélectionner un projet pour le collaborateur');
             return;
         }
         
+        // Bank validation for ECH SAHARA
+        if (incomeSource === 'personnelle') {
+            const modePaiement = document.getElementById('modePaiement')?.value;
+            if (!modePaiement) {
+                showValidationError('Veuillez sélectionner le mode de paiement');
+                return;
+            }
+            
+            if (modePaiement === 'virement') {
+                if (!document.getElementById('nomFournisseur')?.value || !document.getElementById('banque')?.value) {
+                    showValidationError('Veuillez remplir tous les champs du virement');
+                    return;
+                }
+            } else if (modePaiement === 'cheque') {
+                if (!document.getElementById('nomFournisseur')?.value || !document.getElementById('numeroCheque')?.value) {
+                    showValidationError('Veuillez remplir tous les champs du chèque');
+                    return;
+                }
+            }
+        }
+        
+        // Creditor validation for dette
         if (incomeSource === 'dette' && !document.getElementById('nomCrediteur')?.value) {
             showValidationError('Veuillez saisir le nom du créditeur');
             return;
         }
+        
     } else if (operationType === 'decaissement') {
         const modePaiement = document.getElementById('modePaiement')?.value;
         if (!modePaiement) {
@@ -663,20 +1089,39 @@ function validateAndProceedStep1() {
     // Store form data with proper structure
     currentFormData = {
         operationType,
-        projectId,
+        projectId: projectId || null,
         date,
         amount: parseFloat(amount),
         description,
-        dynamicData: {} // Add this nested object
+        dynamicData: {}
     };
     
     // Collect additional fields based on operation type
     if (operationType === 'encaissement') {
         currentFormData.dynamicData.incomeSource = document.getElementById('incomeSource').value;
+        
         if (currentFormData.dynamicData.incomeSource === 'personnelle') {
-            currentFormData.dynamicData.bankName = document.getElementById('bankName').value;
+            currentFormData.dynamicData.modePaiement = document.getElementById('modePaiement').value;
+            if (currentFormData.dynamicData.modePaiement === 'virement') {
+                currentFormData.dynamicData.nomFournisseur = document.getElementById('nomFournisseur').value;
+                currentFormData.dynamicData.banque = document.getElementById('banque').value;
+            } else if (currentFormData.dynamicData.modePaiement === 'cheque') {
+                currentFormData.dynamicData.nomFournisseur = document.getElementById('nomFournisseur').value;
+                currentFormData.dynamicData.numeroCheque = document.getElementById('numeroCheque').value;
+            } else if (currentFormData.dynamicData.modePaiement === 'espece') {
+                const nomFournisseur = document.getElementById('nomFournisseur')?.value;
+                if (nomFournisseur) {
+                    currentFormData.dynamicData.nomFournisseur = nomFournisseur;
+                }
+            }
         } else if (currentFormData.dynamicData.incomeSource === 'dette') {
             currentFormData.dynamicData.nomCrediteur = document.getElementById('nomCrediteur').value;
+        } else if (currentFormData.dynamicData.incomeSource === 'collaborator') {
+            const projectSelect = document.getElementById('projectSelect');
+            const selectedProject = projectSelect.options[projectSelect.selectedIndex];
+            if (selectedProject && selectedProject.dataset.collaborator) {
+                currentFormData.dynamicData.collaboratorName = selectedProject.dataset.collaborator;
+            }
         }
     } else if (operationType === 'decaissement') {
         currentFormData.dynamicData.modePaiement = document.getElementById('modePaiement').value;
@@ -687,7 +1132,6 @@ function validateAndProceedStep1() {
             currentFormData.dynamicData.nomFournisseur = document.getElementById('nomFournisseur').value;
             currentFormData.dynamicData.numeroCheque = document.getElementById('numeroCheque').value;
         } else if (currentFormData.dynamicData.modePaiement === 'espece') {
-            // For cash payments, you might still need the supplier name
             const nomFournisseur = document.getElementById('nomFournisseur')?.value;
             if (nomFournisseur) {
                 currentFormData.dynamicData.nomFournisseur = nomFournisseur;
@@ -709,6 +1153,7 @@ function showUpdateCaisseModalStep2() {
                     <p><span class="font-medium">Type:</span> ${currentFormData.operationType}</p>
                     <p><span class="font-medium">Montant:</span> ${formatNumber(currentFormData.amount)} DZD</p>
                     <p><span class="font-medium">Description:</span> ${currentFormData.description}</p>
+                    ${currentFormData.date ? `<p><span class="font-medium">Date:</span> ${currentFormData.date}</p>` : ''}
                 </div>
             </div>
             
@@ -732,19 +1177,17 @@ function showUpdateCaisseModalStep2() {
     // Update modal title
     document.querySelector('#customModal h2').textContent = 'Opération de Caisse - Étape 2/3';
     document.getElementById('nextBtnText').textContent = 'Confirmer';
-    const modalHTML = createModalHTML('Opération de Caisse - Étape 2/3', content, true);
-    // Update button text
-    document.getElementById('nextBtnText').textContent = 'Confirmer';
-    
     
     // Animate content change
     animateContentChange(content);
+    
     const backBtn = document.getElementById('backBtn');
     if (backBtn) {
         backBtn.addEventListener('click', () => {
             showUpdateCaisseModal();
         });
     }
+    
     // Update next button event
     document.getElementById('nextBtn').removeEventListener('click', validateAndProceedStep1);
     document.getElementById('nextBtn').addEventListener('click', () => {
@@ -827,11 +1270,15 @@ async function loadProjectsForOperation() {
 
 function showOperationFields(operationType) {
     const dynamicFields = document.getElementById('dynamicFields');
+    const projectContainer = document.getElementById('projectContainer');
     
     // Clear previous fields completely
     dynamicFields.innerHTML = '';
     
     if (operationType === 'encaissement') {
+        // Show project container only when needed (will be controlled by income source)
+        projectContainer.style.display = 'none';
+        
         dynamicFields.innerHTML = `
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Source</label>
@@ -849,6 +1296,9 @@ function showOperationFields(operationType) {
             showSourceFields(this.value);
         });
     } else if (operationType === 'decaissement') {
+        // Always show project for decaissement
+        projectContainer.style.display = 'block';
+        
         dynamicFields.innerHTML = `
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mode de paiement</label>
@@ -865,60 +1315,109 @@ function showOperationFields(operationType) {
         document.getElementById('modePaiement').addEventListener('change', function() {
             showPaymentFields(this.value);
         });
+    } else {
+        // Hide project container for no selection
+        projectContainer.style.display = 'none';
     }
 }
 
 function showSourceFields(source) {
     const sourceFields = document.getElementById('sourceFields');
+    const projectContainer = document.getElementById('projectContainer');
     
     // Clear previous fields completely
     sourceFields.innerHTML = '';
     
     if (source === 'personnelle') {
+        // Hide project container for ECH SAHARA
+        projectContainer.style.display = 'none';
+        
+        // Show payment method selection like in decaissement
         sourceFields.innerHTML = `
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Banque</label>
-                <select id="bankName" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-                    <option value="">Choisir la banque</option>
-                    <option value="BEA">BEA</option>
-                    <option value="BDL">BDL</option>
-                    <option value="Albaraka Bank">Albaraka Bank</option>
-                    <option value="AGB">AGB</option>
-                    <option value="Alsalam Bank">Alsalam Bank</option>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mode de paiement</label>
+                <select id="modePaiement" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                    <option value="">Choisir le mode</option>
+                    <option value="virement">Virement</option>
+                    <option value="espece">Espèce</option>
+                    <option value="cheque">Chèque</option>
                 </select>
             </div>
+            <div id="paymentFields"></div>
         `;
-    } else if (source === 'collaborator') {
-        const projectSelect = document.getElementById('projectSelect');
-        const selectedProject = projectSelect.options[projectSelect.selectedIndex];
         
-        if (selectedProject && selectedProject.dataset.collaborator) {
-            sourceFields.innerHTML = `
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Collaborateur</label>
-                    <input type="text" value="${selectedProject.dataset.collaborator}" readonly class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white bg-gray-100 dark:bg-gray-600">
-                </div>
-            `;
-        } else {
-            sourceFields.innerHTML = `
-                <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
-                    <p class="text-red-600 dark:text-red-400 text-sm">Ce projet n'a pas de collaborateur assigné</p>
-                </div>
-            `;
-        }
+        document.getElementById('modePaiement').addEventListener('change', function() {
+            showPaymentFields(this.value);
+        });
+        
+    } else if (source === 'collaborator') {
+        // Show project container for collaborator
+        projectContainer.style.display = 'block';
+        
+        // Add project selection change listener to validate collaborator
+        document.getElementById('projectSelect').addEventListener('change', function() {
+            validateCollaboratorProject(this);
+        });
+        
+        sourceFields.innerHTML = `
+            <div id="collaboratorInfo" class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                <p class="text-blue-600 dark:text-blue-400 text-sm">Sélectionnez un projet pour voir le collaborateur</p>
+            </div>
+        `;
+        
     } else if (source === 'dette') {
+        // Hide project container for dette
+        projectContainer.style.display = 'none';
+        
         sourceFields.innerHTML = `
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nom du créditeur</label>
                 <input type="text" id="nomCrediteur" placeholder="Nom du créditeur" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
             </div>
         `;
+    } else {
+        // Hide project container for no selection
+        projectContainer.style.display = 'none';
+    }
+}
+function validateCollaboratorProject(projectSelect) {
+    const selectedProject = projectSelect.options[projectSelect.selectedIndex];
+    const collaboratorInfo = document.getElementById('collaboratorInfo');
+    
+    if (selectedProject && selectedProject.value) {
+        if (selectedProject.dataset.collaborator) {
+            collaboratorInfo.innerHTML = `
+                <div class="flex items-center text-green-600 dark:text-green-400">
+                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="text-sm">Collaborateur: <strong>${selectedProject.dataset.collaborator}</strong></span>
+                </div>
+            `;
+        } else {
+            collaboratorInfo.innerHTML = `
+                <div class="flex items-center text-red-600 dark:text-red-400">
+                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="text-sm">Ce projet n'a pas de collaborateur assigné</span>
+                </div>
+            `;
+            
+            // Show alert
+            showError('Le projet sélectionné n\'a pas de collaborateur assigné');
+            projectSelect.value = '';
+        }
+    } else {
+        collaboratorInfo.innerHTML = `
+            <p class="text-blue-600 dark:text-blue-400 text-sm">Sélectionnez un projet pour voir le collaborateur</p>
+        `;
     }
 }
 
 function showHistoryPopup() {
     fetchCaisseHistory().then(() => {
-        const operations = window.lastOperations || [];
+        const historyEntries = window.lastOperations || [];
         
         // Create popup
         const { popup, closePopup } = createHistoryPopup();
@@ -952,10 +1451,10 @@ function showHistoryPopup() {
             });
         }
         
-        // Render operations
+        // Render history entries
         const contentDiv = popup.querySelector('#popup-content');
         if (contentDiv) {
-            contentDiv.innerHTML = renderOperations(operations);
+            contentDiv.innerHTML = renderHistoryEntries(historyEntries);
         }
         
         // Add animation
@@ -969,8 +1468,17 @@ function showHistoryPopup() {
                 popup.style.transform = 'scale(1)';
             });
         });
+    }).catch(error => {
+        console.error('Error showing history popup:', error);
+        // Show error popup or message
+        if (typeof showError === 'function') {
+            showError('Erreur lors du chargement de l\'historique');
+        } else {
+            alert('Erreur lors du chargement de l\'historique');
+        }
     });
 }
+
 function showPaymentFields(mode) {
     const paymentFields = document.getElementById('paymentFields');
     
@@ -1020,6 +1528,7 @@ function showPaymentFields(mode) {
         `;
     }
 }
+
 function showValidationError(message) {
     // Remove existing error if any
     const existingError = document.getElementById('validationError');
@@ -1056,9 +1565,9 @@ async function submitCaisseOperation(data) {
         // Basic required fields
         formData.append('amount', data.amount);
         formData.append('description', data.description || '');
-        formData.append('created_at', data.date || new Date().toISOString().split('T')[0]);
+        formData.append('date', data.date || new Date().toISOString().split('T')[0]);
         
-        // Optional project ID
+        // Optional project ID (only when required)
         if (data.projectId) {
             formData.append('project_id', data.projectId);
         }
@@ -1077,9 +1586,23 @@ async function submitCaisseOperation(data) {
             
             // Handle different income sources
             if (incomeSource === 'personnelle') {
-                if (dynamicData.bankName) {
-                    formData.append('bank_name', dynamicData.bankName);
+                // ECH SAHARA with payment method
+                if (dynamicData.modePaiement) {
+                    formData.append('mode_paiement', dynamicData.modePaiement);
                 }
+                
+                if (dynamicData.nomFournisseur) {
+                    formData.append('nom_fournisseur', dynamicData.nomFournisseur);
+                }
+                
+                if (dynamicData.banque) {
+                    formData.append('banque', dynamicData.banque);
+                }
+                
+                if (dynamicData.numeroCheque) {
+                    formData.append('numero_cheque', dynamicData.numeroCheque);
+                }
+                
             } else if (incomeSource === 'dette') {
                 // For dette creation, send creditor_name
                 if (dynamicData.nomCrediteur) {
@@ -1090,28 +1613,12 @@ async function submitCaisseOperation(data) {
                 if (dynamicData.detteId) {
                     formData.append('dette_id', dynamicData.detteId);
                 }
+                
             } else if (incomeSource === 'collaborator') {
                 // Handle collaborator-specific fields if any
                 if (dynamicData.collaboratorName) {
                     formData.append('collaborator_name', dynamicData.collaboratorName);
                 }
-            }
-            
-            // Common encaissement fields that might be used
-            if (dynamicData.modePaiement) {
-                formData.append('mode_paiement', dynamicData.modePaiement);
-            }
-            
-            if (dynamicData.nomFournisseur) {
-                formData.append('nom_fournisseur', dynamicData.nomFournisseur);
-            }
-            
-            if (dynamicData.banque) {
-                formData.append('banque', dynamicData.banque);
-            }
-            
-            if (dynamicData.numeroCheque) {
-                formData.append('numero_cheque', dynamicData.numeroCheque);
             }
             
         } else if (operationType === 'decaissement') {
@@ -1141,19 +1648,6 @@ async function submitCaisseOperation(data) {
                 if (dynamicData.nomFournisseur) {
                     formData.append('nom_fournisseur', dynamicData.nomFournisseur);
                 }
-            }
-            
-            // Other decaissement fields
-            if (dynamicData.bankName) {
-                formData.append('bank_name', dynamicData.bankName);
-            }
-            
-            if (dynamicData.incomeSource) {
-                formData.append('income_source', dynamicData.incomeSource);
-            }
-            
-            if (dynamicData.detteId) {
-                formData.append('dette_id', dynamicData.detteId);
             }
         }
         
@@ -1653,7 +2147,9 @@ function initializeEventListeners() {
     document.getElementById('BonDeCommande').addEventListener('click', () => {
         window.location.href = 'bon_commande.html';
     });
-    
+    document.getElementById('GestionDettes').addEventListener('click', () => {
+        window.location.href = 'dettes.html';
+    });
     document.getElementById('profileBtn').addEventListener('click', () => {
         window.location.href = 'profile.html';
     });
