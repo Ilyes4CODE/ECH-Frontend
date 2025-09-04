@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://127.0.0.1:8000/gestion/';
+const API_BASE_URL = `http://${window.location.hostname}:8000/gestion/`;
 
 const token = localStorage.getItem('access_token');
 const username = localStorage.getItem('username');
@@ -2141,11 +2141,11 @@ function initializeEventListeners() {
     });
     
     document.getElementById('BonDeLivraison').addEventListener('click', () => {
-        window.location.href = 'bon_livraison.html';
+        window.location.href = 'bon_de_livraison.html';
     });
     
     document.getElementById('BonDeCommande').addEventListener('click', () => {
-        window.location.href = 'bon_commande.html';
+        window.location.href = 'bon_de_commande.html';
     });
     document.getElementById('GestionDettes').addEventListener('click', () => {
         window.location.href = 'dettes.html';

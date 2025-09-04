@@ -54,6 +54,46 @@
         .operation-transfer {
             @apply bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800;
         }
+
+        /* RTL Support */
+        [dir="rtl"] {
+            text-align: right;
+        }
+
+        [dir="rtl"] .space-x-4 > * + * {
+            margin-right: 1rem;
+            margin-left: 0;
+        }
+
+        [dir="rtl"] .space-x-2 > * + * {
+            margin-right: 0.5rem;
+            margin-left: 0;
+        }
+
+        [dir="rtl"] .ml-2 {
+            margin-left: 0;
+            margin-right: 0.5rem;
+        }
+
+        [dir="rtl"] .ml-3 {
+            margin-left: 0;
+            margin-right: 0.75rem;
+        }
+
+        [dir="rtl"] .mr-1 {
+            margin-right: 0;
+            margin-left: 0.25rem;
+        }
+
+        [dir="rtl"] .mr-2 {
+            margin-right: 0;
+            margin-left: 0.5rem;
+        }
+
+        /* Language toggle button */
+        .language-toggle {
+            @apply px-3 py-2 rounded-lg bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-700 transition-colors font-medium text-sm;
+        }
     </style>
 </head>
 <body class="theme-transition min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -68,12 +108,17 @@
                         <i class="fas fa-history text-white text-lg"></i>
                     </div>
                     <div>
-                        <h1 class="text-gray-900 dark:text-white font-bold text-xl">Historique de Caisse</h1>
-                        <p class="text-gray-600 dark:text-gray-400 text-sm">Toutes les opérations</p>
+                        <h1 id="pageTitle" class="text-gray-900 dark:text-white font-bold text-xl">Historique de Caisse</h1>
+                        <p id="pageSubtitle" class="text-gray-600 dark:text-gray-400 text-sm">Toutes les opérations</p>
                     </div>
                 </div>
                 
                 <div class="flex items-center space-x-4">
+                    <button id="languageToggle" class="language-toggle">
+                        <i class="fas fa-language mr-1"></i>
+                        <span>عربية / FR</span>
+                    </button>
+                    
                     <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                         <i id="sunIcon" class="fas fa-sun w-5 h-5 text-gray-600 dark:text-gray-300 hidden dark:block"></i>
                         <i id="moonIcon" class="fas fa-moon w-5 h-5 text-gray-600 dark:text-gray-300 block dark:hidden"></i>
@@ -91,20 +136,20 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div id="loadingState" class="text-center py-12">
             <i class="fas fa-spinner fa-spin-custom text-orange-500 text-6xl"></i>
-            <p class="text-gray-600 dark:text-gray-400 mt-4">Chargement de l'historique...</p>
+            <p id="loadingText" class="text-gray-600 dark:text-gray-400 mt-4">Chargement de l'historique...</p>
         </div>
 
         <div id="mainContent" class="hidden">
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
                 <div class="p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    <h2 id="filtersTitle" class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                         <i class="fas fa-filter mr-2 text-orange-500"></i>Filtres de recherche
                     </h2>
                     
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-calendar-alt mr-1"></i>Année
+                                <i class="fas fa-calendar-alt mr-1"></i><span id="yearLabel">Année</span>
                             </label>
                             <select id="yearFilter" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
                                 <option value="">Toutes les années</option>
@@ -113,41 +158,26 @@
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-calendar mr-1"></i>Mois
+                                <i class="fas fa-calendar mr-1"></i><span id="monthLabel">Mois</span>
                             </label>
                             <select id="monthFilter" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
                                 <option value="">Tous les mois</option>
-                                <option value="1">Janvier</option>
-                                <option value="2">Février</option>
-                                <option value="3">Mars</option>
-                                <option value="4">Avril</option>
-                                <option value="5">Mai</option>
-                                <option value="6">Juin</option>
-                                <option value="7">Juillet</option>
-                                <option value="8">Août</option>
-                                <option value="9">Septembre</option>
-                                <option value="10">Octobre</option>
-                                <option value="11">Novembre</option>
-                                <option value="12">Décembre</option>
                             </select>
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-calendar-day mr-1"></i>Jour
+                                <i class="fas fa-calendar-day mr-1"></i><span id="dayLabel">Jour</span>
                             </label>
                             <input type="number" id="dayFilter" min="1" max="31" placeholder="Jour" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-tasks mr-1"></i>Type d'action
+                                <i class="fas fa-tasks mr-1"></i><span id="actionTypeLabel">Type d'action</span>
                             </label>
                             <select id="actionFilter" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
                                 <option value="">Toutes les actions</option>
-                                <option value="encaissement">Encaissement</option>
-                                <option value="decaissement">Décaissement</option>
-                                
                             </select>
                         </div>
                     </div>
@@ -155,27 +185,23 @@
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-credit-card mr-1"></i>Mode de paiement
+                                <i class="fas fa-credit-card mr-1"></i><span id="paymentModeLabel">Mode de paiement</span>
                             </label>
                             <select id="modePaiementFilter" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
                                 <option value="">Tous les modes</option>
-                                <option value="espece">Espèce</option>
-                                <option value="cheque">Chèque</option>
-                                <option value="virement">Virement</option>
-                                
                             </select>
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-user mr-1"></i>Fournisseur
+                                <i class="fas fa-user mr-1"></i><span id="supplierLabel">Fournisseur</span>
                             </label>
                             <input type="text" id="fournisseurFilter" placeholder="Nom du fournisseur" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-university mr-1"></i>Banque
+                                <i class="fas fa-university mr-1"></i><span id="bankLabel">Banque</span>
                             </label>
                             <select id="banqueFilter" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
                                 <option value="">Choisir la banque</option>
@@ -189,43 +215,44 @@
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-search mr-1"></i>Recherche
+                                <i class="fas fa-search mr-1"></i><span id="searchLabel">Recherche</span>
                             </label>
                             <input type="text" id="searchFilter" placeholder="Description, observation..." class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
                         </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-search mr-1"></i>Code opération
+                                <i class="fas fa-hashtag mr-1"></i><span id="operationCodeLabel">Code opération</span>
                             </label>
                             <input type="text" id="codeFilter" placeholder="example : ECH001" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
                         </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-money-bill mr-1"></i>Montant min
+                                <i class="fas fa-money-bill mr-1"></i><span id="minAmountLabel">Montant min</span>
                             </label>
                             <input type="number" id="amountMinFilter" placeholder="0" step="0.01" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-money-bill mr-1"></i>Montant max
+                                <i class="fas fa-money-bill mr-1"></i><span id="maxAmountLabel">Montant max</span>
                             </label>
                             <input type="number" id="amountMaxFilter" placeholder="999999" step="0.01" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-receipt mr-1"></i>N° Chèque
+                                <i class="fas fa-receipt mr-1"></i><span id="chequeNumberLabel">N° Chèque</span>
                             </label>
                             <input type="text" id="chequeFilter" placeholder="Numéro de chèque" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
                         </div>
                         
                         <div class="flex items-end">
                             <button id="searchBtn" class="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg transition-colors">
-                                <i class="fas fa-search mr-2"></i>Rechercher
+                                <i class="fas fa-search mr-2"></i><span id="searchBtnText">Rechercher</span>
                             </button>
                         </div>
                     </div>
@@ -233,7 +260,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-calendar-week mr-1"></i>Période personnalisée
+                                <i class="fas fa-calendar-week mr-1"></i><span id="customPeriodLabel">Période personnalisée</span>
                             </label>
                             <div class="flex space-x-2">
                                 <input type="date" id="startDate" class="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white">
@@ -246,10 +273,10 @@
                         
                         <div class="flex items-end space-x-2">
                             <button id="clearFiltersBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-3 rounded-lg transition-colors">
-                                <i class="fas fa-eraser mr-2"></i>Effacer
+                                <i class="fas fa-eraser mr-2"></i><span id="clearBtnText">Effacer</span>
                             </button>
                             <button id="generatePdfBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-lg transition-colors">
-                                <i class="fas fa-file-pdf mr-2"></i>Générer PDF
+                                <i class="fas fa-file-pdf mr-2"></i><span id="generatePdfBtnText">Générer PDF</span>
                             </button>
                         </div>
                     </div>
@@ -259,7 +286,7 @@
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
                 <div class="p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        <h2 id="summaryTitle" class="text-lg font-semibold text-gray-900 dark:text-white">
                             <i class="fas fa-chart-bar mr-2 text-orange-500"></i>Résumé des opérations
                         </h2>
                         <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
@@ -275,7 +302,7 @@
                                     <i class="fas fa-arrow-down text-white"></i>
                                 </div>
                                 <div class="ml-3">
-                                    <p class="text-sm text-green-600 dark:text-green-300">Encaissements</p>
+                                    <p id="encaissementsLabel" class="text-sm text-green-600 dark:text-green-300">Encaissements</p>
                                     <p class="text-lg font-semibold text-green-700 dark:text-green-200" id="totalEncaissements">0 DZD</p>
                                 </div>
                             </div>
@@ -287,7 +314,7 @@
                                     <i class="fas fa-arrow-up text-white"></i>
                                 </div>
                                 <div class="ml-3">
-                                    <p class="text-sm text-red-600 dark:text-red-300">Décaissements</p>
+                                    <p id="decaissementsLabel" class="text-sm text-red-600 dark:text-red-300">Décaissements</p>
                                     <p class="text-lg font-semibold text-red-700 dark:text-red-200" id="totalDecaissements">0 DZD</p>
                                 </div>
                             </div>
@@ -299,7 +326,7 @@
                                     <i class="fas fa-balance-scale text-white"></i>
                                 </div>
                                 <div class="ml-3">
-                                    <p class="text-sm text-blue-600 dark:text-blue-300">Solde Net</p>
+                                    <p id="netBalanceLabel" class="text-sm text-blue-600 dark:text-blue-300">Solde Net</p>
                                     <p class="text-lg font-semibold text-blue-700 dark:text-blue-200" id="netBalance">0 DZD</p>
                                 </div>
                             </div>
@@ -311,7 +338,7 @@
                                     <i class="fas fa-list-ol text-white"></i>
                                 </div>
                                 <div class="ml-3">
-                                    <p class="text-sm text-gray-600 dark:text-gray-300">Total Opérations</p>
+                                    <p id="totalOperationsLabel" class="text-sm text-gray-600 dark:text-gray-300">Total Opérations</p>
                                     <p class="text-lg font-semibold text-gray-700 dark:text-gray-200" id="totalOperations">0</p>
                                 </div>
                             </div>
@@ -323,18 +350,19 @@
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                 <div class="p-6">
                     <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        <h2 id="historyTitle" class="text-lg font-semibold text-gray-900 dark:text-white">
                             <i class="fas fa-list mr-2 text-orange-500"></i>Historique des opérations
                         </h2>
                         <button id="refreshBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors">
-                            <i class="fas fa-sync-alt mr-2"></i>Actualiser
+                            <i class="fas fa-sync-alt mr-2"></i><span id="refreshBtnText">Actualiser</span>
                         </button>
                     </div>
                     
                     <div id="operationsList" class="space-y-4">
                     </div>
-                    <div id="paginationControls" class="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                    
+                    <div id="paginationControls" class="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
+                        <div id="paginationText" class="text-sm text-gray-600 dark:text-gray-400">
                             Affichage de <span id="itemsStart">0</span> à <span id="itemsEnd">0</span> sur <span id="totalItems">0</span> opérations
                         </div>
                         <div class="flex items-center space-x-2">
@@ -348,10 +376,11 @@
                             </button>
                         </div>
                     </div>
+                    
                     <div id="noOperations" class="text-center py-12 hidden">
                         <i class="fas fa-inbox text-gray-400 text-6xl"></i>
-                        <p class="text-gray-600 dark:text-gray-400 mt-4 text-lg">Aucune opération trouvée</p>
-                        <p class="text-gray-500 dark:text-gray-500 text-sm">Essayez de modifier vos critères de recherche</p>
+                        <p id="noOperationsText" class="text-gray-600 dark:text-gray-400 mt-4 text-lg">Aucune opération trouvée</p>
+                        <p id="noOperationsSubtext" class="text-gray-500 dark:text-gray-500 text-sm">Essayez de modifier vos critères de recherche</p>
                     </div>
                 </div>
             </div>
@@ -374,6 +403,4 @@
 
     <script src="api/caisse_history.js"></script>
 </body>
-    
-
-    
+</html>

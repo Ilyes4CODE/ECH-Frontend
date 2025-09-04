@@ -5,7 +5,7 @@ let collabOperationsPerPage = 10;
 let collabAllOperations = [];
 let collabFilteredOperations = [];
 const urlParams = new URLSearchParams(window.location.search);
-
+console.log('host name:', window.location.hostname);
 const projectId = urlParams.get('project_id');
 console.log('Project ID:', projectId);
 

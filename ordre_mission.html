@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Ordres de Mission - ERP Génie Civil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes slideIn {
+            0% { transform: translateX(-100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .floating { animation: float 6s ease-in-out infinite; }
+        .slide-in { animation: slideIn 0.8s ease-out; }
+        .loading { animation: pulse 1.5s ease-in-out infinite; }
+        
+        .mission-header-light {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .mission-header-dark {
+            background: linear-gradient(135deg, #065f46 0%, #064e3b 100%);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .theme-transition {
+            transition: all 0.3s ease;
+        }
+
+        .fa-spin-custom {
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .mission-row {
+            transition: all 0.3s ease;
+        }
+
+        .mission-row:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="theme-transition min-h-screen bg-gray-50 dark:bg-gray-900">
+    <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <button id="backBtn" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-arrow-left text-gray-600 dark:text-gray-300"></i>
+                    </button>
+                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-file-alt text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-gray-900 dark:text-white font-bold text-xl">ECH SAHARA</h1>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm" id="navSubtitle">Gestion des Ordres de Mission</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button id="languageToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" title="Switch Language">
+                        <i class="fas fa-language w-5 h-5 text-gray-600 dark:text-gray-300"></i>
+                    </button>
+                    
+                    <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i id="sunIcon" class="fas fa-sun w-5 h-5 text-gray-600 dark:text-gray-300 hidden dark:block"></i>
+                        <i id="moonIcon" class="fas fa-moon w-5 h-5 text-gray-600 dark:text-gray-300 block dark:hidden"></i>
+                    </button>
+                    
+                    <div class="text-gray-900 dark:text-white text-right">
+                        <p class="font-medium" id="welcomeUser">Bienvenue</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400" id="userRole">Utilisateur</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="loadingState" class="text-center py-12">
+            <i class="fas fa-spinner fa-spin-custom text-green-500 text-6xl"></i>
+            <p class="text-gray-600 dark:text-gray-400 mt-4" id="loadingText">Chargement des ordres de mission...</p>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div class="mb-8 slide-in">
+                <div class="mission-header-light dark:mission-header-dark rounded-2xl p-8 text-white shadow-2xl floating">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h2 id="mainTitle" class="text-3xl font-bold mb-2">Gestion des Ordres de Mission</h2>
+                            <p id="mainSubtitle" class="text-white/80 mb-4">Suivi et gestion de tous vos ordres de mission</p>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                                <div>
+                                    <p id="totalMissionsLabel" class="text-white/80 text-sm">Total Missions</p>
+                                    <p class="text-xl font-bold" id="totalMissions">0</p>
+                                </div>
+                                <div>
+                                    <p id="thisMonthLabel" class="text-white/80 text-sm">Ce Mois</p>
+                                    <p class="text-xl font-bold text-green-300" id="thisMonth">0</p>
+                                </div>
+                                <div>
+                                    <p id="recentLabel" class="text-white/80 text-sm">Récentes</p>
+                                    <p class="text-xl font-bold text-blue-300" id="recent">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-right ml-6">
+                            <div class="flex flex-col space-y-3">
+                                <button id="addMissionBtn" class="btn-success text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+                                    <i class="fas fa-plus mr-1"></i><span id="newMissionBtn">Nouvel Ordre</span>
+                                </button>
+                            </div>
+                            
+                            <div class="text-6xl opacity-30 mt-4">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                        <h3 id="filtersTitle" class="text-lg font-semibold text-gray-900 dark:text-white">
+                            <i class="fas fa-filter text-green-500 mr-2"></i>Filtres
+                        </h3>
+                        <button id="resetFiltersBtn" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">
+                            <span id="resetBtn"><i class="fas fa-refresh mr-1"></i>Réinitialiser</span>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div>
+                            <label id="nameFilterLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom & Prénom</label>
+                            <input type="text" id="nameFilter" placeholder="Nom ou prénom..." class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div>
+                            <label id="destinationFilterLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Destination</label>
+                            <input type="text" id="destinationFilter" placeholder="Destination..." class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div>
+                            <label id="dateFilterLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date Départ</label>
+                            <input type="date" id="dateFilter" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" id="numeroHeader">N°</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" id="nameHeader">Nom & Prénom</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" id="functionHeader">Fonction</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" id="destinationHeader">Destination</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" id="motifHeader">Motif</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" id="dateStartHeader">Date Départ</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" id="actionsHeader">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="missionsList" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="emptyState" class="text-center py-12 hidden">
+                    <i class="fas fa-file-alt text-gray-400 text-6xl mb-4"></i>
+                    <h3 id="emptyStateTitle" class="text-lg font-medium text-gray-900 dark:text-white mb-2">Aucun ordre de mission trouvé</h3>
+                    <p id="emptyStateDesc" class="text-gray-600 dark:text-gray-400 mb-4">Commencez par créer votre premier ordre de mission</p>
+                    <button id="addFirstMissionBtn" class="btn-primary text-white px-4 py-2 rounded-lg transition-all duration-300">
+                        <span id="emptyStateBtn"><i class="fas fa-plus mr-2"></i>Créer un ordre</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="addMissionModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black opacity-50"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full p-6 shadow-xl max-h-screen overflow-y-auto">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 id="addModalTitle" class="text-lg font-semibold text-gray-900 dark:text-white">Nouvel Ordre de Mission</h3>
+                    <button id="closeAddModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form id="addMissionForm" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label id="nomPrenomLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom & Prénom *</label>
+                            <input type="text" id="nomPrenom" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div>
+                            <label id="fonctionLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fonction *</label>
+                            <input type="text" id="fonction" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label id="adresseLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Adresse *</label>
+                        <textarea id="adresse" required rows="2" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label id="destinationLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Destination *</label>
+                            <input type="text" id="destination" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div>
+                            <label id="moyenDeplacementLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Moyen de Déplacement *</label>
+                            <select id="moyenDeplacement" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                <option value="">Sélectionner...</option>
+                                <option value="vehicule_service">Véhicule de service</option>
+                                <option value="vehicule_personnel">Véhicule personnel</option>
+                                <option value="transport_commun">Transport en commun</option>
+                                <option value="avion">Avion</option>
+                                <option value="autre">Autre</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label id="motifLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Motif de la Mission *</label>
+                        <textarea id="motif" required rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label id="matriculeLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Matricule *</label>
+                            <input type="text" id="matricule" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div>
+                            <label id="matricule2Label" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Matricule 2</label>
+                            <input type="text" id="matricule2" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label id="dateDepartLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date de Départ *</label>
+                            <input type="date" id="dateDepart" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div>
+                            <label id="dateRetourLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date de Retour</label>
+                            <input type="date" id="dateRetour" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label id="accompagneParLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Accompagné Par</label>
+                        <input type="text" id="accompagnePar" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                    </div>
+
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" id="saveBtn" class="flex-1 btn-success text-white py-2 px-4 rounded-lg transition-all duration-300">
+                            <i class="fas fa-save mr-2"></i><span id="saveBtnText">Enregistrer</span>
+                        </button>
+                        <button type="button" id="cancelAdd" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg transition-colors">
+                            <span id="cancelBtn"><i class="fas fa-times mr-2"></i>Annuler</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="editMissionModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black opacity-50"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full p-6 shadow-xl max-h-screen overflow-y-auto">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 id="editModalTitle" class="text-lg font-semibold text-gray-900 dark:text-white">Modifier l'Ordre de Mission</h3>
+                    <button id="closeEditModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form id="editMissionForm" class="space-y-4">
+                    <input type="hidden" id="editMissionId">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label id="editNomPrenomLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom & Prénom *</label>
+                            <input type="text" id="editNomPrenom" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div>
+                            <label id="editFonctionLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fonction *</label>
+                            <input type="text" id="editFonction" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label id="editAdresseLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Adresse *</label>
+                        <textarea id="editAdresse" required rows="2" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label id="editDestinationLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Destination *</label>
+                            <input type="text" id="editDestination" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div>
+                            <label id="editMoyenDeplacementLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Moyen de Déplacement *</label>
+                            <select id="editMoyenDeplacement" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                <option value="">Sélectionner...</option>
+                                <option value="vehicule_service">Véhicule de service</option>
+                                <option value="vehicule_personnel">Véhicule personnel</option>
+                                <option value="transport_commun">Transport en commun</option>
+                                <option value="avion">Avion</option>
+                                <option value="autre">Autre</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label id="editMotifLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Motif de la Mission *</label>
+                        <textarea id="editMotif" required rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label id="editMatriculeLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Matricule *</label>
+                            <input type="text" id="editMatricule" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div>
+                            <label id="editMatricule2Label" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Matricule 2</label>
+                            <input type="text" id="editMatricule2" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label id="editDateDepartLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date de Départ *</label>
+                            <input type="date" id="editDateDepart" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div>
+                            <label id="editDateRetourLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date de Retour</label>
+                            <input type="date" id="editDateRetour" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label id="editAccompagneParLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Accompagné Par</label>
+                        <input type="text" id="editAccompagnePar" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                    </div>
+
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" id="updateBtn" class="flex-1 btn-primary text-white py-2 px-4 rounded-lg transition-all duration-300">
+                            <i class="fas fa-save mr-2"></i><span id="updateBtnText">Mettre à jour</span>
+                        </button>
+                        <button type="button" id="cancelEdit" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg transition-colors">
+                            <span id="cancelEditBtn"><i class="fas fa-times mr-2"></i>Annuler</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="errorToast" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <span id="errorMessage">Une erreur s'est produite</span>
+        </div>
+    </div>
+
+    <div id="successToast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span id="successMessage">Opération réussie</span>
+        </div>
+    </div>
+    <script src="api/ordre_mission.js"></script>
+</body>
+</html>

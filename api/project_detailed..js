@@ -31,7 +31,7 @@ async function refreshToken() {
         const refreshToken = localStorage.getItem('refresh_token');
         if (!refreshToken) return false;
 
-        const response = await fetch('http://127.0.0.1:8000/accounts/token/refresh/', {
+        const response = await fetch(`http://${window.location.hostname}:8000/accounts/token/refresh/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -202,7 +202,7 @@ async function loadProjectDetails() {
             return;
         }
 
-        const response = await fetch(`http://127.0.0.1:8000/gestion/projects/${projectId}/`, {
+        const response = await fetch(`http://${window.location.hostname}:8000/gestion/projects/${projectId}/`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -297,7 +297,7 @@ function generateProjectPdf() {
     
     // Create a temporary link to download the PDF
     const link = document.createElement('a');
-    link.href = `http://127.0.0.1:8000/gestion/projects/${projectId}/pdf/`; // Adjust URL to match your URL pattern
+    link.href = `http://${window.location.hostname}:8000/gestion/projects/${projectId}/pdf/`; // Adjust URL to match your URL pattern
     link.download = `projet_${projectId}.pdf`;
     
     // Handle successful download
@@ -328,14 +328,14 @@ function downloadFile(url, filename) {
     
     // Fix the URL if it's pointing to the wrong port
     let correctedUrl = url;
-    if (url.includes('127.0.0.1:5501')) {
-        correctedUrl = url.replace('127.0.0.1:5501', '127.0.0.1:8000');
+    if (url.includes(`${window.location.hostname}:5501`)) {
+        correctedUrl = url.replace(`${window.location.hostname}:5501`, `${window.location.hostname}:8000`);
     } else if (url.startsWith('/upload/')) {
         // If it's a relative URL, make it absolute with correct port
-        correctedUrl = `http://127.0.0.1:8000${url}`;
+        correctedUrl = `http://${window.location.hostname}:8000${url}`;
     } else if (!url.startsWith('http')) {
         // If it's just a filename or relative path
-        correctedUrl = `http://127.0.0.1:8000/upload/${url}`;
+        correctedUrl = `http://${window.location.hostname}:8000/upload/${url}`;
     }
     
     console.log('Original URL:', url);
@@ -435,7 +435,7 @@ async function updateProject() {
             formData.append('ods_file', odsFile.files[0]);
         }
 
-        const response = await fetch(`http://127.0.0.1:8000/gestion/projects/${projectId}/update/`, {
+        const response = await fetch(`http://${window.location.hostname}:8000/gestion/projects/${projectId}/update/`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -492,7 +492,7 @@ async function loadCollaboratorOperations() {
             return;
         }
 
-        const url = `http://127.0.0.1:8000/gestion/caisse/history/?project_id=${projectId}&by_collaborator=true`;
+        const url = `http://${window.location.hostname}:8000/gestion/caisse/history/?project_id=${projectId}&by_collaborator=true`;
         console.log('Making request to:', url);
         
         const response = await fetch(url, {
@@ -680,7 +680,7 @@ async function exportHistoryPDF() {
         exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Génération...';
         exportBtn.disabled = true;
 
-        const response = await fetch(`http://127.0.0.1:8000/gestion/projects/project-finance-pdf/`, {
+        const response = await fetch(`http://${window.location.hostname}:8000/gestion/projects/project-finance-pdf/`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -758,7 +758,7 @@ async function exportCollaboratorPDF() {
         exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Génération...';
         exportBtn.disabled = true;
 
-        const response = await fetch(`http://127.0.0.1:8000/gestion/projects/project-finance-pdf/`, {
+        const response = await fetch(`http://${window.location.hostname}:8000/gestion/projects/project-finance-pdf/`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -835,7 +835,7 @@ async function loadCollaboratorOperations() {
         }
 
         // Use the correct caisse history endpoint
-        const url = `http://127.0.0.1:8000/gestion/caisse/history/?project_id=${projectId}&by_collaborator=true`;
+        const url = `http://${window.location.hostname}:8000/gestion/caisse/history/?project_id=${projectId}&by_collaborator=true`;
         console.log('Making request to:', url);
         
         const response = await fetch(url, {
@@ -892,7 +892,7 @@ async function loadProjectHistory() {
         }
 
         // Use the correct caisse history endpoint
-        const url = `http://127.0.0.1:8000/gestion/caisse/history/?project_id=${projectId}&by_collaborator=false`;
+        const url = `http://${window.location.hostname}:8000/gestion/caisse/history/?project_id=${projectId}&by_collaborator=false`;
         console.log('Making request to:', url);
         
         const response = await fetch(url, {

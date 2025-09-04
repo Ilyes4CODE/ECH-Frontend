@@ -253,7 +253,7 @@ let allDettes = [];
         async function loadDettes() {
             try {
                 showLoading();
-                const response = await fetch('http://127.0.0.1:8000/gestion/dettes/', {
+                const response = await fetch(`http://${window.location.hostname}:8000/gestion/dettes/`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                     }
@@ -340,7 +340,7 @@ let allDettes = [];
 
         async function generatePDF(detteId) {
             try {
-                const response = await fetch(`http://127.0.0.1:8000/gestion/dettes/${detteId}/`, {
+                const response = await fetch(`http://${window.location.hostname}:8000/gestion/dettes/${detteId}/`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                     }
@@ -348,7 +348,7 @@ let allDettes = [];
 
                 if (response.ok) {
                     const dette = await response.json();
-                    const pdfResponse = await fetch(`http://127.0.0.1:8000/gestion/dettes/${detteId}/journal/pdf/`, {
+                    const pdfResponse = await fetch(`http://${window.location.hostname}:8000/gestion/dettes/${detteId}/journal/pdf/`, {
                         method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -429,7 +429,7 @@ let allDettes = [];
             };
 
             try {
-                const response = await fetch('http://127.0.0.1:8000/gestion/dettes/create/', {
+                const response = await fetch(`http://${window.location.hostname}:8000/gestion/dettes/create/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -453,7 +453,7 @@ let allDettes = [];
 
         async function showDetteDetail(detteId) {
             try {
-                const response = await fetch(`http://127.0.0.1:8000/gestion/dettes/${detteId}/`, {
+                const response = await fetch(`http://${window.location.hostname}:8000/gestion/dettes/${detteId}/`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                     }
@@ -619,7 +619,7 @@ let allDettes = [];
             if (paymentFile) formData.append('preuve_file', paymentFile);
 
             try {
-                const response = await fetch(`http://127.0.0.1:8000/gestion/dettes/${detteId}/payment/`, {
+                const response = await fetch(`http://${window.location.hostname}:8000/gestion/dettes/${detteId}/payment/`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('access_token')}`

@@ -1,10 +1,10 @@
-const BASE_API_URL = 'http://127.0.0.1:8000/gestion';
-const BASE_API = 'http://127.0.0.1:8000';
+const BASE_API_URL = `http://${window.location.hostname}:8000/gestion`;
+const BASE_API = `http://${window.location.hostname}:8000`;
 let currentProjectId = null;
 let allRevenus = [];
 let projectData = null;
 let originalBudget = 0;
-
+console.log(`${window.location.hostname}`);
 function getUrlParameter(name) {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(name);
