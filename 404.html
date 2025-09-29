@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        .container {
+            text-align: center;
+            color: white;
+            z-index: 2;
+            position: relative;
+            padding: 20px;
+        }
+
+        .error-code {
+            font-size: 12rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); }
+            to { text-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.6); }
+        }
+
+        .error-message {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .error-description {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            opacity: 0.8;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .home-button {
+            display: inline-block;
+            padding: 15px 40px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            margin: 10px;
+        }
+
+        .home-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .astronaut {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 30px;
+            position: relative;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .astronaut svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+        }
+
+        .countdown {
+            margin-top: 20px;
+            font-size: 1rem;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            .error-code {
+                font-size: 8rem;
+            }
+            .error-message {
+                font-size: 1.5rem;
+            }
+            .error-description {
+                font-size: 1rem;
+            }
+            .astronaut {
+                width: 150px;
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars"></div>
+    
+    <div class="container">
+        <div class="astronaut">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <!-- Astronaut helmet -->
+                <circle cx="100" cy="80" r="45" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.5)" stroke-width="3"/>
+                <circle cx="100" cy="80" r="35" fill="rgba(200,220,255,0.3)"/>
+                
+                <!-- Face -->
+                <circle cx="90" cy="75" r="3" fill="#333"/>
+                <circle cx="110" cy="75" r="3" fill="#333"/>
+                <path d="M 95 85 Q 100 90 105 85" stroke="#333" stroke-width="2" fill="none"/>
+                
+                <!-- Body -->
+                <ellipse cx="100" cy="140" rx="30" ry="40" fill="rgba(255,255,255,0.8)"/>
+                <rect x="85" y="120" width="30" height="15" fill="rgba(200,200,200,0.5)" rx="5"/>
+                
+                <!-- Arms -->
+                <ellipse cx="70" cy="130" rx="12" ry="25" fill="rgba(255,255,255,0.8)"/>
+                <ellipse cx="130" cy="130" rx="12" ry="25" fill="rgba(255,255,255,0.8)"/>
+                
+                <!-- Legs -->
+                <ellipse cx="85" cy="180" rx="10" ry="20" fill="rgba(255,255,255,0.8)"/>
+                <ellipse cx="115" cy="180" rx="10" ry="20" fill="rgba(255,255,255,0.8)"/>
+            </svg>
+        </div>
+        
+        <div class="error-code">404</div>
+        <div class="error-message">Houston, we have a problem!</div>
+        <div class="error-description">
+            The page you're looking for seems to have drifted into deep space. 
+            Don't worry, our rescue mission is ready to bring you back home.
+        </div>
+        
+        <a href="/" class="home-button" id="homeBtn">Return to Earth</a>
+        <a href="javascript:history.back()" class="home-button">Go Back</a>
+        
+        <div class="countdown" id="countdown"></div>
+    </div>
+
+    <script>
+        // Create animated stars
+        function createStars() {
+            const starsContainer = document.querySelector('.stars');
+            const numStars = 100;
+
+            for (let i = 0; i < numStars; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                const size = Math.random() * 3 + 1;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                star.style.animationDuration = (Math.random() * 3 + 1) + 's';
+                
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // Auto redirect countdown
+        let countdownTime = 10;
+        const countdownElement = document.getElementById('countdown');
+        
+        function updateCountdown() {
+            countdownElement.textContent = `Auto-redirecting to home in ${countdownTime} seconds...`;
+            countdownTime--;
+            
+            if (countdownTime < 0) {
+                window.location.href = '/';
+            }
+        }
+        
+        // Initialize
+        createStars();
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+        
+        // Add click sound effect simulation
+        document.querySelectorAll('.home-button').forEach(button => {
+            button.addEventListener('click', function() {
+                this.style.transform = 'translateY(-2px) scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = 'translateY(-2px) scale(1)';
+                }, 150);
+            });
+        });
+    </script>
+</body>
+</html>

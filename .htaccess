@@ -1,0 +1,66 @@
+# .htaccess file for 404 error handling
+# Save this file as ".htaccess" (with the dot at the beginning) in your root directory
+
+# Enable URL rewriting
+RewriteEngine On
+
+# Custom 404 error page
+ErrorDocument 404 /404.html
+
+# Allow access to your specific HTML files and JS file
+RewriteCond %{REQUEST_URI} ^/(404\.html|accreance\.html|bon_de_commande\.html|bon_de_livraison\.html|bon_details\.html|caisse-history\.html|dashboard\.html|dettes\.html|login\.html|ordre_mission\.html|profile\.html|project_details\.html|Users\.html|loadprofile\.js)$ [NC]
+RewriteRule ^ - [L]
+
+# Optional: Remove .html extension from URLs (clean URLs)
+# Uncomment the lines below if you want URLs like /dashboard instead of /dashboard.html
+
+# RewriteCond %{REQUEST_FILENAME} !-d
+# RewriteCond %{REQUEST_FILENAME} !-f
+# RewriteRule ^([^\.]+)$ $1.html [NC,L]
+
+# RewriteCond %{THE_REQUEST} /([^.]+)\.html [NC]
+# RewriteRule ^ /%1 [NC,L,R=301]
+
+# Security: Prevent access to sensitive files
+<Files ".htaccess">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "*.log">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Optional: Enable GZIP compression for better performance
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Optional: Set cache headers for static files
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+</IfModule>
+
+# Optional: Force HTTPS (uncomment if you have SSL certificate)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Optional: Redirect common typos to correct pages
+# Add specific redirects for common mistakes
+# RewriteRule ^dashbord$ /dashboard.html [R=301,L]
+# RewriteRule ^login$ /login.html [R=301,L]
+# RewriteRule ^profil$ /profile.html [R=301,L]
+
+# Block access to backup and temporary files
+<FilesMatch "\.(bak|backup|old|orig|tmp|temp|~)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
