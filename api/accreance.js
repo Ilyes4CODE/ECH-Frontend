@@ -1,5 +1,5 @@
-const BASE_API_URL = `http://${window.location.hostname}:8000/gestion`;
-const BASE_API = `http://${window.location.hostname}:8000`;
+const BASE_API_URL = `https://backend.echsahra.com/gestion`;
+const BASE_API = `https://backend.echsahra.com`;
 let currentProjectId = null;
 let allRevenus = [];
 let projectData = null;

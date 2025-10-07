@@ -308,7 +308,7 @@ darkModeToggle.addEventListener('click', function() {
 });
 
 // API Configuration - Dynamic base URL
-const API_BASE_URL = `http://${window.location.hostname}:8000`;
+const API_BASE_URL = `https://backend.echsahra.com`;
 
 // Global variables
 let users = [];

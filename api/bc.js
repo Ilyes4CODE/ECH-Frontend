@@ -1,5 +1,5 @@
 // Configuration and Constants - UPDATED
-const API_BASE = `http://${window.location.hostname}:8000/gestion/bon-commande/`;
+const API_BASE = `https://backend.echsahra.com/gestion/bon-commande/`;
 let currentBCs = [];
 let itemCounter = 0;
 let currentLanguage = localStorage.getItem('language') || 'fr';

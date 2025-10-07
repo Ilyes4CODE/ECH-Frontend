@@ -1,4 +1,4 @@
-const API_BASE_URL = `http://${window.location.hostname}:8000/gestion/`;
+const API_BASE_URL = `https://backend.echsahra.com/gestion/`;
 
 const token = localStorage.getItem('access_token');
 const username = localStorage.getItem('username');

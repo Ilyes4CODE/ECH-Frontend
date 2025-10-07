@@ -1,4 +1,4 @@
-const API_BASE = `http://${window.location.hostname}:8000/gestion`;
+const API_BASE = `https://backend.echsahra.com/gestion`;
         let allMissions = [];
         let currentLanguage = localStorage.getItem('language') || 'fr';
         let isDarkMode = localStorage.getItem('darkMode') === 'true';

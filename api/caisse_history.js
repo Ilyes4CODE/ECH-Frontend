@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Base URL Configuration
-    const BASE_URL = `http://${window.location.hostname}:8000/gestion/caisse`;
+    const BASE_URL = `https://backend.echsahra.com/gestion/caisse`;
     const API_BASE = `${BASE_URL}/history/`;
     const PDF_API = `${BASE_URL}/operations/history/pdf/`;
     const OPERATION_PDF_API = `${BASE_URL}/operation/`; // Base URL for single operation PDF

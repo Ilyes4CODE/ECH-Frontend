@@ -134,7 +134,7 @@ function showToast(message, type = 'success') {
 
 async function loadProjects() {
     try {
-        const response = await fetch(`http://${window.location.hostname}:8000/gestion/projects/`,{
+        const response = await fetch(`https://backend.echsahra.com/gestion/projects/`,{
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -167,7 +167,7 @@ function populateProjectSelects() {
 
 async function loadBonLivraisons() {
     try {
-        const response = await fetch(`http://${window.location.hostname}:8000/gestion/bon-livraison/`, {
+        const response = await fetch(`https://backend.echsahra.com/gestion/bon-livraison/`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -388,7 +388,7 @@ function removeCharge(button) {
 
 async function saveBonLivraison(formData) {
     try {
-        const response = await fetch(`http://${window.location.hostname}:8000/gestion/bon-livraison/create/`, {
+        const response = await fetch(`https://backend.echsahra.com/gestion/bon-livraison/create/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -629,7 +629,7 @@ async function editBL(blId) {
 }
 async function updateBonLivraison(blId, formData) {
     try {
-        const response = await fetch(`http://${window.location.hostname}:8000/gestion/bon-livraison/${blId}/update/`, {
+        const response = await fetch(`https://backend.echsahra.com/gestion/bon-livraison/${blId}/update/`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -705,7 +705,7 @@ async function deleteBL(blId) {
 
     if (result.isConfirmed) {
         try {
-            const response = await fetch(`http://${window.location.hostname}:8000/gestion/bon-livraison/${blId}/delete/`, {
+            const response = await fetch(`https://backend.echsahra.com/gestion/bon-livraison/${blId}/delete/`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
@@ -753,7 +753,7 @@ async function downloadBLPDF(blId) {
         downloadBtn.disabled = true;
 
         // Make request to PDF generation endpoint
-        const response = await fetch(`http://${window.location.hostname}:8000/gestion/bon-livraison/${blId}/pdf/`, {
+        const response = await fetch(`https://backend.echsahra.com/gestion/bon-livraison/${blId}/pdf/`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('access_token')}`
