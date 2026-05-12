@@ -1,360 +1,256 @@
 <!DOCTYPE html>
 <html lang="fr" dir="ltr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Utilisateurs - ERP Génie Civil</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class'
-        }
-    </script>
-    <style>
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        @keyframes slideIn {
-            0% { transform: translateX(-100%); opacity: 0; }
-            100% { transform: translateX(0); opacity: 1; }
-        }
-        
-        @keyframes slideInRTL {
-            0% { transform: translateX(100%); opacity: 0; }
-            100% { transform: translateX(0); opacity: 1; }
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        @keyframes fadeIn {
-            0% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-        
-        .floating { animation: float 6s ease-in-out infinite; }
-        .slide-in { animation: slideIn 0.8s ease-out; }
-        .slide-in-rtl { animation: slideInRTL 0.8s ease-out; }
-        .loading { animation: pulse 1.5s ease-in-out infinite; }
-        .fade-in { animation: fadeIn 0.6s ease-out; }
-        
-        .user-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .theme-transition {
-            transition: all 0.3s ease;
-        }
-
-        .group-badge {
-            @apply px-3 py-1 rounded-full text-sm font-medium;
-        }
-
-        .group-admin {
-            @apply bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800;
-        }
-
-        .group-secretary {
-            @apply bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800;
-        }
-
-        .group-commercial {
-            @apply bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-800;
-        }
-
-        .group-comptable {
-            @apply bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800;
-        }
-
-        .group-viewer {
-            @apply bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300 border border-green-200 dark:border-green-800;
-        }
-
-        .status-active {
-            @apply bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300 border border-green-200 dark:border-green-800;
-        }
-
-        .status-inactive {
-            @apply bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-800;
-        }
-
-        .fa-spin-custom {
-            animation: spin 2s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .header-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .header-gradient-dark {
-            background: linear-gradient(135deg, #4c1d95 0%, #581c87 100%);
-        }
-
-        /* SweetAlert2 Dark Mode Styling */
-        .swal2-popup.dark-theme {
-            background-color: #1f2937 !important;
-            color: #f9fafb !important;
-        }
-
-        .swal2-popup.dark-theme .swal2-title {
-            color: #f9fafb !important;
-        }
-
-        .swal2-popup.dark-theme .swal2-input {
-            background-color: #374151 !important;
-            border-color: #4b5563 !important;
-            color: #f9fafb !important;
-        }
-
-        .swal2-popup.dark-theme .swal2-select {
-            background-color: #374151 !important;
-            border-color: #4b5563 !important;
-            color: #f9fafb !important;
-        }
-
-        /* RTL Support */
-        [dir="rtl"] .slide-in {
-            animation: slideInRTL 0.8s ease-out;
-        }
-
-        [dir="rtl"] .user-card {
-            text-align: right;
-        }
-
-        [dir="rtl"] .group-badge {
-            margin-left: 0.25rem;
-            margin-right: 0;
-        }
-
-        /* Language Selector */
-        .language-selector {
-            position: relative;
-        }
-
-        .language-dropdown {
-            position: absolute;
-            right: 0;
-            top: 100%;
-            min-width: 120px;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            z-index: 50;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.2s ease;
-        }
-
-        .language-dropdown.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .dark .language-dropdown {
-            background: #374151;
-            border-color: #4b5563;
-        }
-
-        [dir="rtl"] .language-dropdown {
-            right: auto;
-            left: 0;
-        }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-i18n-title="usr_title">Utilisateurs — ECH SAHARA ERP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="css/app.css">
 </head>
-<body class="theme-transition min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- Navigation Bar -->
-    <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-4 rtl:space-x-reverse">
-                    <button onclick="goBack()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-                        <i class="fas fa-arrow-left rtl:fa-arrow-right text-gray-600 dark:text-gray-300"></i>
-                    </button>
-                    <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
-                        <i class="fas fa-users text-white text-lg"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-gray-900 dark:text-white font-bold text-xl">ECH SAHARA</h1>
-                        <p class="text-gray-600 dark:text-gray-400 text-sm" data-translate="page_title">Gestion des Utilisateurs</p>
-                    </div>
-                </div>
-                
-                <div class="flex items-center space-x-4 rtl:space-x-reverse">
-                    <!-- Language Selector -->
-                    <div class="language-selector">
-                        <button id="languageToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center space-x-1 rtl:space-x-reverse">
-                            <i class="fas fa-language text-gray-600 dark:text-gray-300"></i>
-                            <span class="text-gray-600 dark:text-gray-300 text-sm font-medium" id="currentLangText">FR</span>
-                            <i class="fas fa-chevron-down text-gray-600 dark:text-gray-300 text-xs"></i>
-                        </button>
-                        <div id="languageDropdown" class="language-dropdown">
-                            <button onclick="changeLanguage('fr')" class="w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors flex items-center space-x-2 rtl:space-x-reverse">
-                                <span class="text-lg">🇫🇷</span>
-                                <span>Français</span>
-                            </button>
-                            <button onclick="changeLanguage('ar')" class="w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors flex items-center space-x-2 rtl:space-x-reverse">
-                                <span class="text-lg">🇩🇿</span>
-                                <span>العربية</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Dark Mode Toggle -->
-                    <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-                        <i id="sunIcon" class="fas fa-sun w-5 h-5 text-gray-600 dark:text-gray-300 hidden dark:block"></i>
-                        <i id="moonIcon" class="fas fa-moon w-5 h-5 text-gray-600 dark:text-gray-300 block dark:hidden"></i>
-                    </button>
-                    
-                    <div class="text-gray-900 dark:text-white text-right rtl:text-left">
-                        <p class="font-medium" id="welcomeUser" data-translate="welcome">Bienvenue</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-400" id="userRole" data-translate="loading">Chargement...</p>
-                    </div>
-                    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-300">
-                        <i class="fas fa-sign-out-alt mr-2 rtl:ml-2 rtl:mr-0"></i>
-                        <span data-translate="logout">Déconnexion</span>
-                    </button>
-                </div>
-            </div>
+<body>
+<div class="app">
+  <aside class="sidebar"></aside>
+  <div class="main">
+    <header class="topbar"></header>
+    <div class="content">
+      <div class="page-head">
+        <div>
+          <h2 data-i18n="usr_title">Utilisateurs</h2>
+          <p class="sub" data-i18n="usr_subtitle">Gestion des comptes</p>
         </div>
-    </nav>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Loading State -->
-        <div id="loadingState" class="text-center py-12">
-            <i class="fas fa-spinner fa-spin-custom text-purple-500 text-6xl"></i>
-            <p class="text-gray-600 dark:text-gray-400 mt-4" data-translate="loading_users">Chargement des utilisateurs...</p>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="showCreate()"><i class="fas fa-user-plus"></i> <span data-i18n="usr_new">Nouvel utilisateur</span></button>
         </div>
+      </div>
 
-        <!-- Main Content -->
-        <div id="mainContent" class="hidden">
-            <!-- Header Section -->
-            <div class="mb-8 slide-in">
-                <div class="header-gradient dark:header-gradient-dark rounded-2xl p-8 text-white shadow-2xl floating">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-3xl font-bold mb-2" data-translate="users_management">Gestion des Utilisateurs</h2>
-                            <p class="text-white/80 text-lg" data-translate="manage_accounts">Gérez les comptes et permissions utilisateurs</p>
-                        </div>
-                        <div class="text-right rtl:text-left">
-                            <div class="text-6xl opacity-30">
-                                <i class="fas fa-users-cog"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Quick Stats -->
-                    <div class="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/20">
-                        <div class="text-center">
-                            <p class="text-white/80 text-sm" data-translate="total_users">Total Utilisateurs</p>
-                            <p class="text-2xl font-bold text-white" id="totalUsers">0</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-white/80 text-sm" data-translate="active_users">Utilisateurs Actifs</p>
-                            <p class="text-2xl font-bold text-green-300" id="activeUsers">0</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-white/80 text-sm" data-translate="admin_users">Administrateurs</p>
-                            <p class="text-2xl font-bold text-red-300" id="adminUsers">0</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Controls Section -->
-            <div class="slide-in mb-6">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-gray-900 dark:text-white text-2xl font-bold" data-translate="users_list">Liste des Utilisateurs</h2>
-                    <div class="flex space-x-3 rtl:space-x-reverse">
-                        <button id="refreshUsersBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all duration-300">
-                            <i class="fas fa-sync-alt mr-2 rtl:ml-2 rtl:mr-0"></i>
-                            <span data-translate="refresh">Actualiser</span>
-                        </button>
-                        <button id="createUserBtn" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg transition-all duration-300 transform hover:scale-105">
-                            <i class="fas fa-user-plus mr-2 rtl:ml-2 rtl:mr-0"></i>
-                            <span data-translate="new_user">Nouvel Utilisateur</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Search and Filter -->
-            <div class="slide-in mb-6">
-                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="flex flex-col md:flex-row gap-4">
-                        <div class="flex-1">
-                            <input type="text" id="searchUsers" data-translate-placeholder="search_user" placeholder="Rechercher un utilisateur..." 
-                                class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white">
-                        </div>
-                        <div class="md:w-48">
-                            <select id="filterGroup" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white">
-                                <option value="" data-translate="all_groups">Tous les groupes</option>
-                                <option value="Admin" data-translate="administrators">Administrateurs</option>
-                                <option value="Commercial" data-translate="commercial">Commercial</option>
-                                <option value="Comptable" data-translate="accountant">Comptable</option>
-                                <option value="Secrétaire" data-translate="secretary">Secrétaire</option>
-                            </select>
-                        </div>
-                        <div class="md:w-48">
-                            <select id="filterStatus" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white">
-                                <option value="" data-translate="all_statuses">Tous les statuts</option>
-                                <option value="active" data-translate="active">Actifs</option>
-                                <option value="inactive" data-translate="inactive">Inactifs</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Users Grid -->
-            <div class="slide-in">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="usersList">
-                    <!-- Users will be loaded here -->
-                </div>
-            </div>
-
-            <!-- Empty State -->
-            <div id="emptyState" class="text-center py-12 hidden">
-                <i class="fas fa-users text-gray-400 text-6xl mb-4"></i>
-                <h3 class="text-gray-600 dark:text-gray-400 text-xl font-medium mb-2" data-translate="no_users">Aucun utilisateur trouvé</h3>
-                <p class="text-gray-500 dark:text-gray-500" data-translate="create_first_user">Commencez par créer votre premier utilisateur</p>
-                <button onclick="createUser()" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg transition-all duration-300">
-                    <i class="fas fa-user-plus mr-2 rtl:ml-2 rtl:mr-0"></i>
-                    <span data-translate="create_user">Créer un utilisateur</span>
-                </button>
-            </div>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-row">
+            <div><div class="stat-label" data-i18n="usr_total">Total</div><div class="stat-value" id="s-total">—</div></div>
+            <div class="stat-icon primary"><i class="fas fa-users"></i></div>
+          </div>
         </div>
+        <div class="stat">
+          <div class="stat-row">
+            <div><div class="stat-label" data-i18n="usr_active">Actifs</div><div class="stat-value" id="s-active">—</div></div>
+            <div class="stat-icon success"><i class="fas fa-user-check"></i></div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="stat-row">
+            <div><div class="stat-label" data-i18n="usr_admins">Admins</div><div class="stat-value" id="s-admins">—</div></div>
+            <div class="stat-icon warning"><i class="fas fa-user-shield"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3 data-i18n="usr_title">Utilisateurs</h3>
+          <div class="filter-bar" style="margin:0;flex-wrap:wrap;">
+            <div class="input-icon" style="min-width:220px;">
+              <i class="fas fa-search"></i>
+              <input class="input" id="f-search" data-i18n-ph="btn_search" oninput="applyFilters()" placeholder="Rechercher...">
+            </div>
+            <select id="f-group" class="select" style="width:160px;" onchange="applyFilters()">
+              <option value="" data-i18n="lbl_all">Tous les rôles</option>
+              <option value="Admin">Admin</option>
+              <option value="Commercial">Commercial</option>
+              <option value="Comptable">Comptable</option>
+              <option value="Secrétaire">Secrétaire</option>
+            </select>
+            <select id="f-status" class="select" style="width:140px;" onchange="applyFilters()">
+              <option value="" data-i18n="lbl_all">Tous</option>
+              <option value="active" data-i18n="lbl_active">Actif</option>
+              <option value="inactive" data-i18n="lbl_inactive">Inactif</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="resetFilters()"><i class="fas fa-rotate-left"></i> <span data-i18n="btn_clear">Effacer</span></button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="table">
+            <thead><tr>
+              <th data-i18n="usr_username">Nom d'utilisateur</th>
+              <th data-i18n="prof_fullname">Nom complet</th>
+              <th data-i18n="usr_group">Rôle</th>
+              <th data-i18n="lbl_status">Statut</th>
+              <th data-i18n="lbl_actions">Actions</th>
+            </tr></thead>
+            <tbody id="usersBody">
+              <tr><td colspan="5"><div class="loader-wrap"><div class="loader"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
+  </div>
+</div>
 
-    <!-- Error Toast -->
-    <div id="errorToast" class="fixed top-4 right-4 rtl:right-auto rtl:left-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
-        <div class="flex items-center">
-            <i class="fas fa-exclamation-circle mr-2 rtl:ml-2 rtl:mr-0"></i>
-            <span id="errorMessage" data-translate="error_occurred">Une erreur s'est produite</span>
-        </div>
-    </div>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/ui.js"></script>
+<script>
+let usersList = [];
 
-    <!-- Success Toast -->
-    <div id="successToast" class="fixed top-4 right-4 rtl:right-auto rtl:left-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
-        <div class="flex items-center">
-            <i class="fas fa-check-circle mr-2 rtl:ml-2 rtl:mr-0"></i>
-            <span id="successMessage" data-translate="operation_success">Opération réussie</span>
-        </div>
-    </div>
-    <script src="api/Users.js"></script>
-    
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!UI.init('nav_users','usr_title')) return;
+  if (!Auth.isAdmin()) { UI.err(I18n.t('err_forbidden')); setTimeout(()=>location.href='dashboard.html', 1500); return; }
+  I18n.init();
+  await loadUsers();
+});
+
+async function loadUsers() {
+  const tb = document.getElementById('usersBody');
+  tb.innerHTML = `<tr><td colspan="5"><div class="loader-wrap"><div class="loader"></div></div></td></tr>`;
+  try {
+    usersList = await Auth.get(CFG.R.USERS);
+    document.getElementById('s-total').textContent  = usersList.length;
+    document.getElementById('s-active').textContent = usersList.filter(u=>u.is_active!==false).length;
+    document.getElementById('s-admins').textContent = usersList.filter(u=>(u.groups||[]).includes('Admin')).length;
+    applyFilters();
+  } catch { tb.innerHTML = UI.emptyRow(5, 'fa-circle-exclamation', 'err_load'); }
+}
+
+function applyFilters() {
+  const q   = (document.getElementById('f-search').value||'').toLowerCase().trim();
+  const grp = document.getElementById('f-group').value;
+  const st  = document.getElementById('f-status').value;
+  const filtered = usersList.filter(u => {
+    if (grp && !(u.groups||[]).includes(grp)) return false;
+    if (st === 'active'   && u.is_active === false) return false;
+    if (st === 'inactive' && u.is_active !== false) return false;
+    if (q) {
+      const hay = [
+        u.username||'', u.first_name||'', u.last_name||'',
+        u.email||'', (u.groups||[]).join(' ')
+      ].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  render(filtered);
+}
+
+function resetFilters() {
+  document.getElementById('f-search').value = '';
+  document.getElementById('f-group').value  = '';
+  document.getElementById('f-status').value = '';
+  applyFilters();
+}
+
+function render(list) {
+  const tb = document.getElementById('usersBody');
+  list = list || usersList;
+  if (!list.length) { tb.innerHTML = UI.emptyRow(5, 'fa-users'); return; }
+  tb.innerHTML = list.map(u => {
+    const active = u.is_active !== false;
+    const grp = (u.groups||[]).join(', ') || '—';
+    const full = ((u.first_name||'')+' '+(u.last_name||'')).trim() || '—';
+    return `<tr>
+      <td><span class="fw-600">${escapeHtml(u.username)}</span></td>
+      <td>${escapeHtml(full)}</td>
+      <td><span class="badge primary">${escapeHtml(grp)}</span></td>
+      <td><span class="badge ${active?'success':'danger'}">${active?I18n.t('lbl_active'):I18n.t('lbl_inactive')}</span></td>
+      <td><div class="table-actions">
+        <button class="btn btn-ghost btn-sm" onclick="showEdit(${u.id})" data-i18n-title="btn_edit"><i class="fas fa-pen"></i></button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleStatus(${u.id})" style="color:${active?'var(--c-warning)':'var(--c-success)'};" data-i18n-title="${active?'usr_deactivate':'usr_activate'}"><i class="fas ${active?'fa-user-slash':'fa-user-check'}"></i></button>
+        <button class="btn btn-ghost btn-sm" onclick="del(${u.id})" style="color:var(--c-danger);" data-i18n-title="btn_delete"><i class="fas fa-trash"></i></button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function escapeHtml(s) { return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function showCreate() {
+  const data = await UI.formModal({
+    titleKey:'usr_new', width:480,
+    html: `<div class="swal-form">
+      <div class="field"><label class="label">${I18n.t('usr_username')} <span class="req">*</span></label>
+        <input class="input" name="username" required></div>
+      <div class="field"><label class="label">${I18n.t('usr_password')} <span class="req">*</span></label>
+        <input class="input" type="password" name="password" required></div>
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('usr_first_name')}</label>
+          <input class="input" name="first_name"></div>
+        <div class="field"><label class="label">${I18n.t('usr_last_name')}</label>
+          <input class="input" name="last_name"></div>
+      </div>
+      <div class="field"><label class="label">${I18n.t('usr_group')} <span class="req">*</span></label>
+        <select class="select" name="group" required>
+          <option value="Commercial">Commercial</option>
+          <option value="Comptable">Comptable</option>
+          <option value="Secrétaire">Secrétaire</option>
+          <option value="Admin">Admin</option>
+        </select></div>
+    </div>`,
+    preConfirm: (d) => ({
+      username: d.username,
+      password: d.password,
+      first_name: d.first_name||'',
+      last_name: d.last_name||'',
+      groups: [d.group]
+    })
+  });
+  if (!data) return;
+  const r = await Auth.post(CFG.R.USER_CREATE, data);
+  if (r?.ok) { UI.ok(I18n.t('usr_success_create')); await loadUsers(); }
+  else await UI.apiErr(r);
+}
+
+async function showEdit(id) {
+  const u = usersList.find(x => x.id === id);
+  if (!u) return;
+  const data = await UI.formModal({
+    titleKey:'btn_edit', width:480,
+    html: `<div class="swal-form">
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('usr_first_name')}</label>
+          <input class="input" name="first_name" value="${escapeHtml(u.first_name||'')}"></div>
+        <div class="field"><label class="label">${I18n.t('usr_last_name')}</label>
+          <input class="input" name="last_name" value="${escapeHtml(u.last_name||'')}"></div>
+      </div>
+      <div class="field"><label class="label">${I18n.t('usr_pwd_optional')}</label>
+        <input class="input" type="password" name="password" placeholder="••••••••"></div>
+      <div class="field"><label class="label">${I18n.t('usr_group')}</label>
+        <select class="select" name="group">
+          ${['Commercial','Comptable','Secrétaire','Admin'].map(g =>
+            `<option value="${g}" ${(u.groups||[]).includes(g)?'selected':''}>${g}</option>`
+          ).join('')}
+        </select></div>
+    </div>`,
+    preConfirm: (d) => {
+      const body = {
+        first_name: d.first_name||'',
+        last_name: d.last_name||'',
+        groups: [d.group]
+      };
+      if (d.password) body.password = d.password;
+      return body;
+    }
+  });
+  if (!data) return;
+  const r = await Auth.put(CFG.R.USER_UPDATE(id), data);
+  if (r?.ok) { UI.ok(I18n.t('usr_success_update')); await loadUsers(); }
+  else await UI.apiErr(r);
+}
+
+async function toggleStatus(id) {
+  const r = await Auth.fetch(CFG.R.USER_TOGGLE(id));
+  if (r?.ok) { UI.ok(I18n.t('usr_success_toggle')); await loadUsers(); }
+  else await UI.apiErr(r);
+}
+
+async function del(id) {
+  if (!await UI.confirmDelete()) return;
+  const r = await Auth.del(CFG.R.USER_DELETE(id));
+  if (r?.ok) { UI.ok(I18n.t('usr_success_delete')); await loadUsers(); }
+  else await UI.apiErr(r);
+}
+</script>
 </body>
 </html>

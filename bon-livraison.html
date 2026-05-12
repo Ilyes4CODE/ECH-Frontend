@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-i18n-title="bl_title">Bons de livraison — ECH SAHARA ERP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar"></aside>
+  <div class="main">
+    <header class="topbar"></header>
+    <div class="content">
+      <div class="page-head">
+        <div>
+          <h2 data-i18n="bl_title">Bons de livraison</h2>
+          <p class="sub" data-i18n="bl_subtitle">Gestion des livraisons</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="showBL()"><i class="fas fa-plus"></i> <span data-i18n="bl_new">Nouveau BL</span></button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-row">
+            <div><div class="stat-label" data-i18n="bl_title">Total BL</div><div class="stat-value" id="s-total">—</div></div>
+            <div class="stat-icon primary"><i class="fas fa-truck-fast"></i></div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="stat-row">
+            <div><div class="stat-label" data-i18n="bl_total">Montant total</div><div class="stat-value" id="s-amount">—</div></div>
+            <div class="stat-icon success"><i class="fas fa-coins"></i></div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="stat-row">
+            <div><div class="stat-label">Ce mois</div><div class="stat-value" id="s-month">—</div></div>
+            <div class="stat-icon warning"><i class="fas fa-calendar-days"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3 data-i18n="bl_title">Liste</h3>
+          <div class="filter-bar" style="margin:0;flex-wrap:wrap;">
+            <div class="input-icon" style="min-width:200px;">
+              <i class="fas fa-search"></i>
+              <input class="input" id="f-search" data-i18n-ph="btn_search" oninput="applyFilters()" placeholder="N° BL, origine, destination...">
+            </div>
+            <select class="select" id="f-proj" style="width:180px;" onchange="loadBL()">
+              <option value="" data-i18n="lbl_all">Tous les projets</option>
+            </select>
+            <select class="select" id="f-pay" style="width:140px;" onchange="applyFilters()">
+              <option value="" data-i18n="lbl_all">Tous modes</option>
+              <option value="especes" data-i18n="caisse_mode_especes">Espèces</option>
+              <option value="cheque" data-i18n="caisse_mode_cheque">Chèque</option>
+              <option value="virement" data-i18n="caisse_mode_virement">Virement</option>
+            </select>
+            <input type="date" class="input" id="f-from" style="width:150px;" onchange="applyFilters()" title="Date début">
+            <input type="date" class="input" id="f-to" style="width:150px;" onchange="applyFilters()" title="Date fin">
+            <button class="btn btn-ghost btn-sm" onclick="resetFilters()"><i class="fas fa-rotate-left"></i> <span data-i18n="btn_clear">Effacer</span></button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="table">
+            <thead><tr>
+              <th data-i18n="bl_number">N°</th>
+              <th data-i18n="lbl_project">Projet</th>
+              <th data-i18n="bl_origin">Origine</th>
+              <th data-i18n="bl_dest">Destination</th>
+              <th data-i18n="bl_total">Montant</th>
+              <th data-i18n="lbl_date">Date</th>
+              <th data-i18n="lbl_actions">Actions</th>
+            </tr></thead>
+            <tbody id="blBody">
+              <tr><td colspan="7"><div class="loader-wrap"><div class="loader"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/ui.js"></script>
+<script>
+let blList = [];
+let projects = [];
+let itemCounter = 0;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!UI.init('nav_bl','bl_title')) return;
+  I18n.init();
+  projects = await Auth.get(CFG.R.PROJECTS).catch(()=>[]);
+  const sel = document.getElementById('f-proj');
+  projects.forEach(p => sel.innerHTML += `<option value="${p.id}">${escapeHtml(p.name)}</option>`);
+  await loadBL();
+});
+
+async function loadBL() {
+  const tb = document.getElementById('blBody');
+  tb.innerHTML = `<tr><td colspan="7"><div class="loader-wrap"><div class="loader"></div></div></td></tr>`;
+  try {
+    const pid = document.getElementById('f-proj').value;
+    let url = CFG.R.BL_LIST;
+    if (pid) url += '?project_id=' + pid;
+    blList = await Auth.get(url);
+    const total = blList.reduce((s,b)=>s+parseFloat(b.total_amount||0),0);
+    const m = new Date().toISOString().slice(0,7);
+    document.getElementById('s-total').textContent  = blList.length;
+    document.getElementById('s-amount').textContent = UI.fmtAmount(total);
+    document.getElementById('s-month').textContent  = blList.filter(b => (b.created_at||'').startsWith(m)).length;
+    applyFilters();
+  } catch { tb.innerHTML = UI.emptyRow(7, 'fa-circle-exclamation', 'err_load'); }
+}
+
+function applyFilters() {
+  const q    = (document.getElementById('f-search')?.value||'').toLowerCase().trim();
+  const pay  = document.getElementById('f-pay')?.value;
+  const from = document.getElementById('f-from')?.value;
+  const to   = document.getElementById('f-to')?.value;
+  const filtered = blList.filter(b => {
+    if (q) {
+      const hay = [b.bl_number||'', b.origin_address||'', b.destination_address||'', b.project_name||'', b.description||''].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    if (pay && b.payment_method !== pay) return false;
+    const d = (b.created_at||'').slice(0,10);
+    if (from && d && d < from) return false;
+    if (to   && d && d > to)   return false;
+    return true;
+  });
+  render(filtered);
+}
+
+function resetFilters() {
+  document.getElementById('f-search').value = '';
+  document.getElementById('f-pay').value = '';
+  document.getElementById('f-from').value = '';
+  document.getElementById('f-to').value = '';
+  applyFilters();
+}
+
+function render(list) {
+  const tb = document.getElementById('blBody');
+  list = list || blList;
+  if (!list.length) { tb.innerHTML = UI.emptyRow(7, 'fa-truck-fast'); return; }
+  tb.innerHTML = list.map(b => `<tr>
+    <td><span class="fw-600">${escapeHtml(b.bl_number||'—')}</span></td>
+    <td>${escapeHtml(b.project_name||'—')}</td>
+    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeAttr(b.origin_address||'')}">${escapeHtml(b.origin_address||'—')}</td>
+    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeAttr(b.destination_address||'')}">${escapeHtml(b.destination_address||'—')}</td>
+    <td class="fw-600 text-success">${UI.fmtAmount(b.total_amount)}</td>
+    <td style="color:var(--c-text-2);">${UI.fmtDate(b.created_at)}</td>
+    <td><div class="table-actions">
+      <button class="btn btn-ghost btn-sm" onclick="downloadPDF(${b.id})" data-i18n-title="btn_pdf"><i class="fas fa-file-pdf text-danger"></i></button>
+      <button class="btn btn-ghost btn-sm" onclick="showBL(${b.id})" data-i18n-title="btn_edit"><i class="fas fa-pen"></i></button>
+      <button class="btn btn-ghost btn-sm" onclick="del(${b.id})" style="color:var(--c-danger);" data-i18n-title="btn_delete"><i class="fas fa-trash"></i></button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function escapeHtml(s) { return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s) { return (s||'').toString().replace(/"/g,'&quot;'); }
+
+async function showBL(id = null) {
+  const bl = id ? blList.find(b=>b.id===id) : null;
+  const items = bl?.items || [{product_name:'', quantity:1, unit_price:0}];
+  const charges = bl?.additional_charges || [];
+  const projOpts = projects.map(p=>`<option value="${p.id}" ${bl&&bl.project_id===p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+  itemCounter = 0;
+
+  const itemsHTML = items.map(it => itemRow(it.product_name||'', it.quantity||1, it.unit_price||0)).join('');
+  const chargesHTML = charges.map(c => chargeRow(c.description||'', c.amount||0)).join('');
+
+  const r = await Swal.fire({
+    title: I18n.t(id?'btn_edit':'bl_new'),
+    width: 760,
+    html: `<div class="swal-form">
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('lbl_project')} <span class="req">*</span></label>
+          <select class="select" id="bl-proj" required>${projOpts}</select></div>
+        <div class="field"><label class="label">${I18n.t('bl_payment')}</label>
+          <select class="select" id="bl-pay" onchange="togglePay()">
+            <option value="especes">${I18n.t('caisse_mode_especes')}</option>
+            <option value="cheque">${I18n.t('caisse_mode_cheque')}</option>
+            <option value="virement">${I18n.t('caisse_mode_virement')}</option>
+          </select></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('bl_origin')} <span class="req">*</span></label>
+          <input class="input" id="bl-origin" required value="${escapeAttr(bl?.origin_address||'')}"></div>
+        <div class="field"><label class="label">${I18n.t('bl_dest')} <span class="req">*</span></label>
+          <input class="input" id="bl-dest" required value="${escapeAttr(bl?.destination_address||'')}"></div>
+      </div>
+      <div class="form-row cols-3" id="bl-pay-extra" style="display:none;">
+        <div class="field"><label class="label">${I18n.t('caisse_fournisseur')}</label><input class="input" id="bl-four"></div>
+        <div class="field"><label class="label">${I18n.t('caisse_banque')}</label><input class="input" id="bl-bank"></div>
+        <div class="field"><label class="label">${I18n.t('caisse_cheque')}</label><input class="input" id="bl-cheque"></div>
+      </div>
+      <div class="field"><label class="label">${I18n.t('lbl_description')}</label>
+        <textarea class="textarea" id="bl-desc" rows="2">${escapeHtml(bl?.description||'')}</textarea></div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 6px;">
+        <strong style="font-size:13px;">${I18n.t('bl_items')}</strong>
+        <button type="button" class="btn btn-soft btn-sm" onclick="addItem()"><i class="fas fa-plus"></i> ${I18n.t('bl_add_item')}</button>
+      </div>
+      <div id="items">${itemsHTML}</div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 6px;">
+        <strong style="font-size:13px;">${I18n.t('bl_charges')}</strong>
+        <button type="button" class="btn btn-soft btn-sm" onclick="addCharge()"><i class="fas fa-plus"></i> ${I18n.t('bl_add_charge')}</button>
+      </div>
+      <div id="charges">${chargesHTML}</div>
+
+      <div style="background:var(--c-surface-2);border-radius:10px;padding:12px;margin-top:14px;display:flex;justify-content:space-between;align-items:center;">
+        <strong>${I18n.t('lbl_total')}</strong>
+        <strong id="bl-total" style="font-size:16px;color:var(--c-primary);">0.00 DA</strong>
+      </div>
+    </div>`,
+    showCancelButton: true,
+    confirmButtonText: I18n.t('btn_save'),
+    cancelButtonText: I18n.t('btn_cancel'),
+    reverseButtons: I18n.lang === 'ar',
+    didOpen: () => {
+      if (bl) {
+        document.getElementById('bl-pay').value = bl.payment_method || 'especes';
+        document.getElementById('bl-four').value = bl.nom_fournisseur || '';
+        document.getElementById('bl-bank').value = bl.banque || '';
+        document.getElementById('bl-cheque').value = bl.numero_cheque || '';
+        togglePay();
+      }
+      calcTotal();
+    },
+    preConfirm: () => {
+      const proj = document.getElementById('bl-proj').value;
+      const origin = document.getElementById('bl-origin').value.trim();
+      const dest = document.getElementById('bl-dest').value.trim();
+      if (!proj || !origin || !dest) { Swal.showValidationMessage(I18n.t('err_required')); return false; }
+      const items = [];
+      document.querySelectorAll('.item-row').forEach(r => {
+        const name = r.querySelector('[data-f=name]').value.trim();
+        const qty  = parseFloat(r.querySelector('[data-f=qty]').value);
+        const up   = parseFloat(r.querySelector('[data-f=up]').value);
+        if (name && !isNaN(qty)) items.push({ product_name: name, quantity: qty, unit_price: isNaN(up)?null:up });
+      });
+      if (!items.length) { Swal.showValidationMessage(I18n.t('err_required')); return false; }
+      const additional_charges = [];
+      document.querySelectorAll('.charge-row').forEach(r => {
+        const d = r.querySelector('[data-f=desc]').value.trim();
+        const a = parseFloat(r.querySelector('[data-f=amount]').value);
+        if (d && !isNaN(a)) additional_charges.push({ description: d, amount: a });
+      });
+      return {
+        project_id: parseInt(proj),
+        origin_address: origin,
+        destination_address: dest,
+        description: document.getElementById('bl-desc').value,
+        payment_method: document.getElementById('bl-pay').value,
+        nom_fournisseur: document.getElementById('bl-four').value || '',
+        banque: document.getElementById('bl-bank').value || '',
+        numero_cheque: document.getElementById('bl-cheque').value || '',
+        items,
+        additional_charges
+      };
+    }
+  });
+  if (!r.isConfirmed) return;
+  const res = id ? await Auth.put(CFG.R.BL_UPDATE(id), r.value) : await Auth.post(CFG.R.BL_CREATE, r.value);
+  if (res?.ok) { UI.ok(I18n.t(id?'bl_success_update':'bl_success_create')); await loadBL(); }
+  else await UI.apiErr(res);
+}
+
+function itemRow(name='', qty=1, up=0) {
+  itemCounter++;
+  return `<div class="item-row" style="display:grid;grid-template-columns:1fr 80px 110px 110px 32px;gap:6px;margin-bottom:6px;align-items:center;">
+    <input class="input" data-f="name" placeholder="${I18n.t('bl_product')}" value="${escapeAttr(name)}" oninput="calcTotal()">
+    <input class="input" data-f="qty" type="number" min="0" step="0.01" value="${qty}" oninput="calcTotal()">
+    <input class="input" data-f="up" type="number" min="0" step="0.01" value="${up}" oninput="calcTotal()">
+    <span class="row-total" style="font-size:13px;font-weight:600;color:var(--c-primary);text-align:right;">0.00</span>
+    <button type="button" onclick="this.closest('.item-row').remove();calcTotal();" style="width:28px;height:28px;border:none;border-radius:6px;background:var(--c-danger-bg);color:var(--c-danger);cursor:pointer;"><i class="fas fa-xmark"></i></button>
+  </div>`;
+}
+function chargeRow(desc='', amount=0) {
+  return `<div class="charge-row" style="display:grid;grid-template-columns:1fr 110px 32px;gap:6px;margin-bottom:6px;align-items:center;">
+    <input class="input" data-f="desc" placeholder="${I18n.t('bl_charge_desc')||'Description'}" value="${escapeAttr(desc)}" oninput="calcTotal()">
+    <input class="input" data-f="amount" type="number" min="0" step="0.01" value="${amount}" oninput="calcTotal()">
+    <button type="button" onclick="this.closest('.charge-row').remove();calcTotal();" style="width:28px;height:28px;border:none;border-radius:6px;background:var(--c-danger-bg);color:var(--c-danger);cursor:pointer;"><i class="fas fa-xmark"></i></button>
+  </div>`;
+}
+function addItem() { document.getElementById('items').insertAdjacentHTML('beforeend', itemRow()); }
+function addCharge() { document.getElementById('charges').insertAdjacentHTML('beforeend', chargeRow()); }
+function calcTotal() {
+  let t = 0;
+  document.querySelectorAll('.item-row').forEach(r => {
+    const q = parseFloat(r.querySelector('[data-f=qty]').value)||0;
+    const u = parseFloat(r.querySelector('[data-f=up]').value)||0;
+    const lt = q*u;
+    r.querySelector('.row-total').textContent = lt.toFixed(2);
+    t += lt;
+  });
+  document.querySelectorAll('.charge-row').forEach(r => {
+    t += parseFloat(r.querySelector('[data-f=amount]').value)||0;
+  });
+  document.getElementById('bl-total').textContent = UI.fmtAmount(t);
+}
+function togglePay() {
+  const v = document.getElementById('bl-pay').value;
+  document.getElementById('bl-pay-extra').style.display = v==='especes' ? 'none' : 'grid';
+}
+
+async function downloadPDF(id) { try { await Auth.download(CFG.R.BL_PDF(id)); } catch { UI.err(I18n.t('err_load')); } }
+async function del(id) {
+  if (!await UI.confirmDelete()) return;
+  const r = await Auth.del(CFG.R.BL_DELETE(id));
+  if (r?.ok) { UI.ok(I18n.t('btn_delete')+' ✓'); await loadBL(); } else await UI.apiErr(r);
+}
+</script>
+</body>
+</html>

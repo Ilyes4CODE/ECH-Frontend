@@ -1,239 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr" dir="ltr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Page Not Found</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .stars {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            animation: twinkle 2s infinite alternate;
-        }
-
-        @keyframes twinkle {
-            0% { opacity: 0.3; }
-            100% { opacity: 1; }
-        }
-
-        .container {
-            text-align: center;
-            color: white;
-            z-index: 2;
-            position: relative;
-            padding: 20px;
-        }
-
-        .error-code {
-            font-size: 12rem;
-            font-weight: bold;
-            margin-bottom: 20px;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-            animation: glow 2s ease-in-out infinite alternate;
-        }
-
-        @keyframes glow {
-            from { text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); }
-            to { text-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.6); }
-        }
-
-        .error-message {
-            font-size: 2rem;
-            margin-bottom: 10px;
-            font-weight: 300;
-        }
-
-        .error-description {
-            font-size: 1.2rem;
-            margin-bottom: 30px;
-            opacity: 0.8;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .home-button {
-            display: inline-block;
-            padding: 15px 40px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            text-decoration: none;
-            border-radius: 50px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            font-size: 1.1rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            margin: 10px;
-        }
-
-        .home-button:hover {
-            background: rgba(255, 255, 255, 0.3);
-            border-color: rgba(255, 255, 255, 0.5);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .astronaut {
-            width: 200px;
-            height: 200px;
-            margin: 0 auto 30px;
-            position: relative;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-        }
-
-        .astronaut svg {
-            width: 100%;
-            height: 100%;
-            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
-        }
-
-        .countdown {
-            margin-top: 20px;
-            font-size: 1rem;
-            opacity: 0.7;
-        }
-
-        @media (max-width: 768px) {
-            .error-code {
-                font-size: 8rem;
-            }
-            .error-message {
-                font-size: 1.5rem;
-            }
-            .error-description {
-                font-size: 1rem;
-            }
-            .astronaut {
-                width: 150px;
-                height: 150px;
-            }
-        }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>404 — ECH SAHARA ERP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="css/app.css">
+<style>
+  body { display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px; }
+  .e-icon { width:120px;height:120px;border-radius:32px;background:linear-gradient(135deg,#1E3A8A,#1E40AF);display:flex;align-items:center;justify-content:center;margin-bottom:32px;box-shadow:0 20px 40px rgba(30,58,138,.3); }
+  .e-icon i { font-size:48px;color:#fff; }
+  .e-num { font-size:96px;font-weight:800;color:var(--c-primary);opacity:.1;line-height:1;margin-bottom:-16px;letter-spacing:-.04em; }
+  h1 { font-size:28px;font-weight:700;color:var(--c-text);margin-bottom:8px; }
+  p { color:var(--c-text-2);font-size:15px;max-width:420px;text-align:center;margin-bottom:32px;line-height:1.6; }
+  .bar { width:240px;height:4px;background:var(--c-border);border-radius:99px;margin-bottom:24px;overflow:hidden; }
+  .bar > div { height:100%;background:var(--c-accent);border-radius:99px;width:0; }
+  .lang-row { position:fixed;top:20px;right:20px; }
+  [dir="rtl"] .lang-row { right:auto;left:20px; }
+  .brand-foot { position:fixed;bottom:20px;display:flex;align-items:center;gap:8px;color:var(--c-text-3);font-size:12.5px; }
+  .brand-foot .b { width:28px;height:28px;border-radius:8px;background:var(--c-accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px; }
+  @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
+  .floating { animation: float 3s ease-in-out infinite; }
+</style>
 </head>
 <body>
-    <div class="stars"></div>
-    
-    <div class="container">
-        <div class="astronaut">
-            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                <!-- Astronaut helmet -->
-                <circle cx="100" cy="80" r="45" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.5)" stroke-width="3"/>
-                <circle cx="100" cy="80" r="35" fill="rgba(200,220,255,0.3)"/>
-                
-                <!-- Face -->
-                <circle cx="90" cy="75" r="3" fill="#333"/>
-                <circle cx="110" cy="75" r="3" fill="#333"/>
-                <path d="M 95 85 Q 100 90 105 85" stroke="#333" stroke-width="2" fill="none"/>
-                
-                <!-- Body -->
-                <ellipse cx="100" cy="140" rx="30" ry="40" fill="rgba(255,255,255,0.8)"/>
-                <rect x="85" y="120" width="30" height="15" fill="rgba(200,200,200,0.5)" rx="5"/>
-                
-                <!-- Arms -->
-                <ellipse cx="70" cy="130" rx="12" ry="25" fill="rgba(255,255,255,0.8)"/>
-                <ellipse cx="130" cy="130" rx="12" ry="25" fill="rgba(255,255,255,0.8)"/>
-                
-                <!-- Legs -->
-                <ellipse cx="85" cy="180" rx="10" ry="20" fill="rgba(255,255,255,0.8)"/>
-                <ellipse cx="115" cy="180" rx="10" ry="20" fill="rgba(255,255,255,0.8)"/>
-            </svg>
-        </div>
-        
-        <div class="error-code">404</div>
-        <div class="error-message">Houston, we have a problem!</div>
-        <div class="error-description">
-            The page you're looking for seems to have drifted into deep space. 
-            Don't worry, our rescue mission is ready to bring you back home.
-        </div>
-        
-        <a href="/" class="home-button" id="homeBtn">Return to Earth</a>
-        <a href="javascript:history.back()" class="home-button">Go Back</a>
-        
-        <div class="countdown" id="countdown"></div>
-    </div>
+<div class="lang-row">
+  <div class="lang-pill">
+    <button class="active" data-lang-btn="fr" onclick="setL('fr')">FR</button>
+    <button data-lang-btn="ar" onclick="setL('ar')">ع</button>
+  </div>
+</div>
 
-    <script>
-        // Create animated stars
-        function createStars() {
-            const starsContainer = document.querySelector('.stars');
-            const numStars = 100;
+<div class="e-icon floating"><i class="fas fa-map-location-dot"></i></div>
+<div class="e-num">404</div>
+<h1 id="t-title" data-i18n="e404_title">Page introuvable</h1>
+<p id="t-desc" data-i18n="e404_desc">La page demandée n'existe pas ou a été déplacée.</p>
+<div class="bar"><div id="prog"></div></div>
+<div style="display:flex;gap:10px;">
+  <a href="dashboard.html" class="btn btn-primary"><i class="fas fa-home"></i> <span data-i18n="e404_btn">Tableau de bord</span></a>
+  <button onclick="history.back()" class="btn btn-ghost"><i class="fas fa-arrow-left"></i> <span data-i18n="btn_back">Retour</span></button>
+</div>
 
-            for (let i = 0; i < numStars; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                
-                const size = Math.random() * 3 + 1;
-                star.style.width = size + 'px';
-                star.style.height = size + 'px';
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                star.style.animationDelay = Math.random() * 2 + 's';
-                star.style.animationDuration = (Math.random() * 3 + 1) + 's';
-                
-                starsContainer.appendChild(star);
-            }
-        }
+<div class="brand-foot">
+  <div class="b"><i class="fas fa-hard-hat"></i></div>
+  <span>ECH SAHARA ERP</span>
+</div>
 
-        // Auto redirect countdown
-        let countdownTime = 10;
-        const countdownElement = document.getElementById('countdown');
-        
-        function updateCountdown() {
-            countdownElement.textContent = `Auto-redirecting to home in ${countdownTime} seconds...`;
-            countdownTime--;
-            
-            if (countdownTime < 0) {
-                window.location.href = '/';
-            }
-        }
-        
-        // Initialize
-        createStars();
-        updateCountdown();
-        setInterval(updateCountdown, 1000);
-        
-        // Add click sound effect simulation
-        document.querySelectorAll('.home-button').forEach(button => {
-            button.addEventListener('click', function() {
-                this.style.transform = 'translateY(-2px) scale(0.95)';
-                setTimeout(() => {
-                    this.style.transform = 'translateY(-2px) scale(1)';
-                }, 150);
-            });
-        });
-    </script>
+<script src="js/i18n.js"></script>
+<script>
+function setL(l) { I18n.setLang(l); }
+I18n.init();
+
+let p = 0;
+const bar = document.getElementById('prog');
+const iv = setInterval(() => {
+  p += 100/80;
+  bar.style.width = Math.min(p, 100) + '%';
+  if (p >= 100) { clearInterval(iv); location.href = localStorage.getItem('access_token') ? 'dashboard.html' : 'login.html'; }
+}, 100);
+</script>
 </body>
 </html>

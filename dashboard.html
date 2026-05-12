@@ -1,338 +1,416 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" dir="ltr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau de Bord - ERP Génie Civil</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class'
-        }
-    </script>
-    <style>
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        @keyframes slideIn {
-            0% { transform: translateX(-100%); opacity: 0; }
-            100% { transform: translateX(0); opacity: 1; }
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .floating { animation: float 6s ease-in-out infinite; }
-        .slide-in { animation: slideIn 0.8s ease-out; }
-        .loading { animation: pulse 1.5s ease-in-out infinite; }
-        
-        .money-card-light {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-        
-        .money-card-dark {
-            background: linear-gradient(135deg, #4c1d95 0%, #581c87 100%);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-        }
-        
-        .project-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .theme-transition {
-            transition: all 0.3s ease;
-        }
-
-        .status-badge {
-            @apply px-3 py-1 rounded-full text-sm font-medium;
-        }
-
-        .status-active {
-            @apply bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300 border border-green-200 dark:border-green-800;
-        }
-
-        .status-planning {
-            @apply bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800;
-        }
-
-        .status-completed {
-            @apply bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800;
-        }
-
-        .fa-spin-custom {
-            animation: spin 2s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .animate-pulse {
-            animation: pulse 1s ease-in-out;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        #modalContent {
-    scrollbar-width: thin;
-    scrollbar-color: #f97316 #f3f4f6;
-}
-
-#modalContent::-webkit-scrollbar {
-    width: 6px;
-}
-
-#modalContent::-webkit-scrollbar-track {
-    background: #f3f4f6;
-}
-
-#modalContent::-webkit-scrollbar-thumb {
-    background: #f97316;
-    border-radius: 3px;
-}
-
-#modalContent::-webkit-scrollbar-thumb:hover {
-    background: #ea580c;
-}
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-i18n-title="dash_title">Tableau de bord — ECH SAHARA ERP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  .project-card {
+    background:var(--c-surface);
+    border:1px solid var(--c-border);
+    border-radius:12px;
+    padding:14px;
+    transition:all .2s;
+    cursor:pointer;
+    text-decoration:none;
+    color:inherit;
+    display:block;
+  }
+  .project-card:hover {
+    border-color:var(--c-primary);
+    box-shadow:var(--shadow);
+    transform:translateY(-2px);
+  }
+  .project-card .pn { font-size:14px;font-weight:600;color:var(--c-text);margin-bottom:6px;display:flex;align-items:center;gap:8px; }
+  .project-card .pd { font-size:12px;color:var(--c-text-2);margin-bottom:10px;line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical; }
+  .project-card .pmeta { display:flex;gap:10px;font-size:11.5px;color:var(--c-text-2); }
+  .project-card .pmeta span { display:inline-flex;align-items:center;gap:4px; }
+  .quick-link {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    padding:14px 10px;
+    border:1px solid var(--c-border);
+    border-radius:10px;
+    text-decoration:none;
+    color:var(--c-text);
+    transition:all .2s;
+    background:var(--c-surface);
+  }
+  .quick-link:hover {
+    border-color:var(--c-primary);
+    background:var(--c-primary-bg);
+    color:var(--c-primary);
+    transform:translateY(-1px);
+  }
+  .quick-link i { font-size:18px; }
+  .quick-link span { font-size:12px;font-weight:500; }
+</style>
 </head>
-<body class="theme-transition min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- Navigation Bar -->
-    <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-4">
-                    <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
-                        <i class="fas fa-chart-line text-white text-lg"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-gray-900 dark:text-white font-bold text-xl">ECH SAHARA</h1>
-                        <p class="text-gray-600 dark:text-gray-400 text-sm">Tableau de Bord</p>
-                    </div>
-                </div>
-                
-                <div class="flex items-center space-x-4">
-    <!-- Dark Mode Toggle -->
-    <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-        <i id="sunIcon" class="fas fa-sun w-5 h-5 text-gray-600 dark:text-gray-300 hidden dark:block"></i>
-        <i id="moonIcon" class="fas fa-moon w-5 h-5 text-gray-600 dark:text-gray-300 block dark:hidden"></i>
-    </button>
-    
-    <!-- Profile Button -->
-    <button id="profileBtn" class="flex items-center space-x-2 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 transform hover:scale-105">
-        <i class="fas fa-user text-gray-600 dark:text-gray-300"></i>
-        <span class="text-gray-600 dark:text-gray-300 text-sm font-medium">Profil</span>
-    </button>
-    
-    <div class="text-gray-900 dark:text-white text-right">
-        <p class="font-medium" id="welcomeUser">Bienvenue</p>
-        <p class="text-sm text-gray-600 dark:text-gray-400" id="userRole">Chargement...</p>
+<body>
+<div class="app">
+  <aside class="sidebar"></aside>
+  <div class="main">
+    <header class="topbar"></header>
+    <div class="content">
+
+      <div class="page-head">
+        <div>
+          <h2 data-i18n="dash_title">Tableau de bord</h2>
+          <p class="sub" data-i18n="lbl_overview">Vue d'ensemble de votre activité</p>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat featured">
+          <div class="stat-row">
+            <div>
+              <div class="stat-label" data-i18n="dash_caisse">Solde de caisse</div>
+              <div class="stat-value" id="s-caisse">—</div>
+              <div class="stat-sub" id="s-caisse-date"></div>
+            </div>
+            <div class="stat-icon"><i class="fas fa-cash-register"></i></div>
+          </div>
+          <div class="stat-actions">
+            <button class="mini-btn" onclick="showEncaissement()"><i class="fas fa-plus"></i> <span data-i18n="dash_encaisser">Encaisser</span></button>
+            <button class="mini-btn" onclick="showDecaissement()"><i class="fas fa-minus"></i> <span data-i18n="dash_decaisser">Décaisser</span></button>
+          </div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-row">
+            <div>
+              <div class="stat-label" data-i18n="dash_projects">Projets</div>
+              <div class="stat-value" id="s-projects">—</div>
+            </div>
+            <div class="stat-icon primary"><i class="fas fa-diagram-project"></i></div>
+          </div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-row">
+            <div>
+              <div class="stat-label" data-i18n="dash_dettes">Dettes actives</div>
+              <div class="stat-value" id="s-dettes">—</div>
+            </div>
+            <div class="stat-icon danger"><i class="fas fa-hand-holding-dollar"></i></div>
+          </div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-row">
+            <div>
+              <div class="stat-label" data-i18n="dash_benefices">Bénéfices</div>
+              <div class="stat-value" id="s-benefices">—</div>
+            </div>
+            <div class="stat-icon success"><i class="fas fa-arrow-trend-up"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-3" style="margin-bottom:24px;">
+        <div class="card-head"><h3 data-i18n="dash_quick">Accès rapide</h3></div>
+        <div class="card-body">
+          <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(110px,1fr));">
+            <a href="caisse.html" class="quick-link"><i class="fas fa-cash-register text-primary"></i><span data-i18n="nav_caisse">Caisse</span></a>
+            <a href="bon-livraison.html" class="quick-link"><i class="fas fa-truck-fast" style="color:#0EA5E9;"></i><span data-i18n="nav_bl">BL</span></a>
+            <a href="bon-commande.html" class="quick-link"><i class="fas fa-file-invoice text-accent"></i><span data-i18n="nav_bc">BC</span></a>
+            <a href="ordre-mission.html" class="quick-link"><i class="fas fa-plane-departure" style="color:#7C3AED;"></i><span data-i18n="nav_missions">Missions</span></a>
+            <a href="dettes.html" class="quick-link"><i class="fas fa-hand-holding-dollar text-danger"></i><span data-i18n="nav_dettes">Dettes</span></a>
+            <a href="accreances.html" class="quick-link"><i class="fas fa-arrow-trend-up text-success"></i><span data-i18n="nav_accreances">Accréances</span></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-head">
+            <h3 data-i18n="dash_my_projects">Mes projets</h3>
+            <button class="btn btn-primary btn-sm" onclick="showNewProject()">
+              <i class="fas fa-plus"></i> <span data-i18n="dash_new_project">Nouveau</span>
+            </button>
+          </div>
+          <div class="card-body" id="projectsBox" style="max-height:480px;overflow-y:auto;">
+            <div class="loader-wrap"><div class="loader"></div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3 data-i18n="dash_recent_ops">Opérations récentes</h3>
+            <a href="caisse.html" class="btn btn-ghost btn-sm"><span data-i18n="dash_see_all">Tout voir</span> <i class="fas fa-arrow-right"></i></a>
+          </div>
+          <div class="table-scroll">
+            <table class="table">
+              <thead><tr>
+                <th data-i18n="lbl_type">Type</th>
+                <th data-i18n="lbl_amount">Montant</th>
+                <th data-i18n="lbl_project">Projet</th>
+                <th data-i18n="lbl_date">Date</th>
+              </tr></thead>
+              <tbody id="opsBody">
+                <tr><td colspan="4"><div class="loader-wrap" style="padding:30px;"><div class="loader"></div></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div>
-    
-    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105">
-        <i class="fas fa-sign-out-alt mr-2"></i>Déconnexion
-    </button>
+  </div>
 </div>
-            </div>
-        </div>
-    </nav>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Loading State -->
-        <div id="loadingState" class="text-center py-12">
-            <i class="fas fa-spinner fa-spin-custom text-orange-500 text-6xl"></i>
-            <p class="text-gray-600 dark:text-gray-400 mt-4">Chargement des données...</p>
-        </div>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/ui.js"></script>
+<script>
+let projects = [];
 
-        <!-- Main Content -->
-        <div id="mainContent" class="hidden">
-            <!-- Money/Caisse Card -->
-            <div class="mb-8 slide-in">
-                <div class="money-card-light dark:money-card-dark rounded-2xl p-8 text-white shadow-2xl floating">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-2xl font-bold mb-2">Solde de Caisse</h2>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-4xl font-bold" id="cashAmount">0.00</span>
-                                <span class="text-2xl font-medium">DZD</span>
-                            </div>
-                            <p class="text-white/80 mt-2">Dernière mise à jour: <span id="lastUpdate">--</span></p>
-                        </div>
-                        <div class="text-right">
-                            <button id="updateCaisseBtn" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all duration-300 mb-2">
-                                <i class="fas fa-edit mr-1"></i>Mettre à jour
-                            </button>
-                            
-                            <button id="viewHistoryBtn" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all duration-300 mb-2 mr-2">
-                                <i class="fas fa-history mr-1"></i>Historique
-                            </button>
-                            <div class="text-6xl opacity-30">
-                                <i class="fas fa-coins"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Quick Stats -->
-                    <div class="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/20">
-                        <div class="text-center">
-                            <p class="text-white/80 text-sm">Projets Actifs</p>
-                            <p class="text-xl font-bold text-green-300" id="activeProjectsCount">0</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-white/80 text-sm">Total Dépensé</p>
-                            <p class="text-xl font-bold text-red-300" id="totalSpent">0 DZD</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-white/80 text-sm">Total Projets</p>
-                            <p class="text-xl font-bold text-yellow-300" id="totalProjects">0</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!UI.init('nav_dashboard','dash_title')) return;
+  I18n.init();
+  await Promise.all([loadStats(), loadProjects(), loadRecentOps()]);
+});
 
-            <!-- Projects Section -->
-            <div class="slide-in">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-gray-900 dark:text-white text-3xl font-bold">Projets Récents</h2>
-                    
-                   <div class="flex space-x-3">
-    <button id="refreshProjectsBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all duration-300">
-        <i class="fas fa-sync-alt mr-2"></i>Actualiser
-    </button>
-    
-    <!-- Dropdown Container -->
-    <div class="relative">
-        <button id="actionsDropdownBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center">
-            <i class="fas fa-plus mr-2"></i>
-            Actions
-            <i class="fas fa-chevron-down ml-2"></i>
-        </button>
-        
-        <!-- Dropdown Menu -->
-        <div id="actionsDropdown" class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 hidden">
-            <div class="py-2">
-                <button id="newProjectBtn" class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center transition-colors">
-                    <i class="fas fa-plus mr-3 text-orange-500"></i>
-                    Nouveau Projet
-                </button>
-                <button id="usersBtn" class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center transition-colors">
-                    <i class="fas fa-users mr-3 text-blue-500"></i>
-                    Utilisateurs
-                </button>
-                <button id="Ordredemission" class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center transition-colors">
-                    <i class="fas fa-file-alt mr-3 text-green-500"></i>
-                    Ordre De Mission
-                </button>
-                <button id="BonDeLivraison" class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center transition-colors">
-                    <i class="fas fa-truck mr-3 text-purple-500"></i>
-                    Bon De Livraison
-                </button>
-                <button id="BonDeCommande" class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center transition-colors">
-                    <i class="fas fa-shopping-cart mr-3 text-red-500"></i>
-                    Bon De Commande
-                </button>
-                <button id="GestionDettes" class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center transition-colors">
-                    <i class="fas fa-money-bill-wave mr-3 text-red-500"></i>
-                    Gestion des Dettes
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-                    
-                </div>
-                <!-- Project Filters -->
-<div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-6 shadow-sm border border-gray-200 dark:border-gray-700">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4">
-        <div class="flex items-center space-x-2">
-            <i class="fas fa-filter text-gray-500 dark:text-gray-400"></i>
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Filtres:</span>
-        </div>
-        
-        <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4">
-            <!-- Name Filter -->
-            <div class="flex-1 md:max-w-xs">
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                    <i class="fas fa-search mr-1"></i>Nom du projet
-                </label>
-                <input 
-                    type="text" 
-                    id="nameFilter" 
-                    placeholder="Rechercher par nom..." 
-                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                >
-            </div>
-            
-            <!-- Date Filter -->
-            <div class="flex-1 md:max-w-xs">
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                    <i class="fas fa-calendar mr-1"></i>Date de création
-                </label>
-                <input 
-                    type="date" 
-                    id="dateFilter" 
-                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                >
-            </div>
-            
-            <!-- Clear Filters Button -->
-            <div class="flex items-end">
-                <button 
-                    id="clearFiltersBtn" 
-                    class="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-                >
-                    <i class="fas fa-times mr-1"></i>Effacer
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-                <!-- Projects Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="projectsList">
-                    <!-- Projects will be loaded here -->
-                </div>
+async function loadStats() {
+  try {
+    const d = await Auth.get(CFG.R.DASHBOARD);
+    document.getElementById('s-caisse').textContent    = UI.fmtAmount(d.caisse_balance);
+    document.getElementById('s-projects').textContent  = d.total_projects ?? '—';
+    document.getElementById('s-dettes').textContent    = d.active_dettes ?? '—';
+    document.getElementById('s-benefices').textContent = UI.fmtAmount(d.total_benefices);
+  } catch(e) { console.error(e); }
+}
 
-                <!-- Load More Button -->
-                <div class="text-center mt-8">
-                    <button id="loadMoreBtn" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-8 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 border border-gray-200 dark:border-gray-700 shadow-sm">
-                        <i class="fas fa-chevron-down mr-2"></i>Charger plus de projets
-                    </button>
-                </div>
-            </div>
-            
-        </div>
-    </div>
+async function loadProjects() {
+  const box = document.getElementById('projectsBox');
+  try {
+    projects = await Auth.get(CFG.R.PROJECTS);
+    if (!projects.length) {
+      box.innerHTML = `<div class="table-empty"><i class="fas fa-diagram-project"></i><p data-i18n="dash_no_projects">${I18n.t('dash_no_projects')}</p></div>`;
+      return;
+    }
+    box.innerHTML = `<div class="grid" style="grid-template-columns:1fr;gap:10px;">
+      ${projects.map(p => `
+        <a href="project-detail.html?id=${p.id}" class="project-card">
+          <div class="pn"><i class="fas fa-folder text-accent"></i> ${escapeHtml(p.name)}</div>
+          <div class="pd">${escapeHtml(p.description||'')}</div>
+          <div class="pmeta">
+            <span class="text-danger"><i class="fas fa-arrow-down"></i> ${UI.fmtAmount(p.total_depenses)}</span>
+            <span class="text-success"><i class="fas fa-arrow-up"></i> ${UI.fmtAmount(p.total_accreance)}</span>
+          </div>
+        </a>
+      `).join('')}
+    </div>`;
+  } catch(e) {
+    box.innerHTML = `<div class="table-empty"><i class="fas fa-circle-exclamation text-danger"></i><p>${I18n.t('err_load')}</p></div>`;
+  }
+}
 
-    <!-- Update Caisse Modal -->
-    
+async function loadRecentOps() {
+  const tb = document.getElementById('opsBody');
+  try {
+    const d = await Auth.get(CFG.R.CAISSE_HISTORY + '?page_size=6&ordering=-created_at');
+    const ops = d.results || d;
+    if (!ops.length) { tb.innerHTML = UI.emptyRow(4, 'fa-clock'); return; }
+    tb.innerHTML = ops.map(o => `<tr>
+      <td><span class="badge ${o.action==='encaissement'?'success':'danger'}">
+        <i class="fas fa-arrow-${o.action==='encaissement'?'down':'up'}"></i>
+        ${o.action==='encaissement'?I18n.t('caisse_encaissement'):I18n.t('caisse_decaissement')}
+      </span></td>
+      <td class="fw-600">${UI.fmtAmount(o.amount)}</td>
+      <td>${o.project?.name||'—'}</td>
+      <td style="color:var(--c-text-2);font-size:12.5px;">${UI.fmtDate(o.date||o.created_at)}</td>
+    </tr>`).join('');
+  } catch(e) {
+    tb.innerHTML = UI.emptyRow(4, 'fa-circle-exclamation', 'err_load');
+  }
+}
 
-    <!-- Error Toast -->
-    <div id="errorToast" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
-        <div class="flex items-center">
-            <i class="fas fa-exclamation-circle mr-2"></i>
-            <span id="errorMessage">Une erreur s'est produite</span>
-        </div>
-    </div>
+function escapeHtml(s) {
+  if (!s) return '';
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
-    <!-- Success Toast -->
-    <div id="successToast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
-        <div class="flex items-center">
-            <i class="fas fa-check-circle mr-2"></i>
-            <span id="successMessage">Opération réussie</span>
-        </div>
-    </div>
+function payFieldsHTML(prefix) {
+  return `
+    <div class="form-row cols-2" id="${prefix}-pay-extra" style="display:none;">
+      <div class="field"><label class="label">${I18n.t('caisse_fournisseur')}</label><input class="input" name="nom_fournisseur"></div>
+      <div class="field"><label class="label" id="${prefix}-pay-extra-lbl">${I18n.t('caisse_cheque')}</label><input class="input" name="bank_ref"></div>
+    </div>`;
+}
 
-    <script src="api/dashboard.js"></script>
-  
-    
+async function showEncaissement() {
+  const projOpts = projects.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  const data = await UI.formModal({
+    titleKey:'enc_title', width:520,
+    html: `<div class="swal-form">
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('enc_amount')} <span class="req">*</span></label>
+          <input class="input" type="number" name="amount" min="0.01" step="0.01" required></div>
+        <div class="field"><label class="label">${I18n.t('lbl_date')} <span class="req">*</span></label>
+          <input class="input" type="date" name="date" required value="${new Date().toISOString().slice(0,10)}"></div>
+      </div>
+      <div class="field">
+        <label class="label">${I18n.t('enc_source')}</label>
+        <select class="select" name="income_source" id="enc-source" onchange="toggleEncSrc(this.value)">
+          <option value="projet">${I18n.t('caisse_source_projet')}</option>
+          <option value="dette">${I18n.t('caisse_source_dette')}</option>
+          <option value="collaborator">${I18n.t('caisse_source_collab')}</option>
+          <option value="autre">${I18n.t('caisse_source_autre')}</option>
+        </select>
+      </div>
+      <div class="field" id="enc-project-f"><label class="label">${I18n.t('lbl_project')}</label>
+        <select class="select" name="project_id"><option value="">—</option>${projOpts}</select></div>
+      <div class="field" id="enc-creditor-f" style="display:none;"><label class="label">${I18n.t('enc_creditor')}</label>
+        <input class="input" name="creditor_name"></div>
+      <div class="field" id="enc-obs-f" style="display:none;"><label class="label">${I18n.t('caisse_observation')}</label>
+        <textarea class="textarea" name="observation" rows="2"></textarea></div>
+      <div class="field">
+        <label class="label">${I18n.t('caisse_mode')}</label>
+        <select class="select" name="mode_paiement" onchange="togglePay(this.value,'enc')">
+          <option value="especes">${I18n.t('caisse_mode_especes')}</option>
+          <option value="cheque">${I18n.t('caisse_mode_cheque')}</option>
+          <option value="virement">${I18n.t('caisse_mode_virement')}</option>
+        </select>
+      </div>
+      ${payFieldsHTML('enc')}
+      <div class="field"><label class="label">${I18n.t('lbl_description')}</label>
+        <textarea class="textarea" name="description" rows="2"></textarea></div>
+    </div>`,
+    preConfirm: (d) => {
+      const body = {
+        amount: parseFloat(d.amount),
+        date: d.date,
+        description: d.description||'',
+        income_source: d.income_source,
+        mode_paiement: d.mode_paiement
+      };
+      if (d.project_id) body.project_id = parseInt(d.project_id);
+      if (d.creditor_name) body.creditor_name = d.creditor_name;
+      if (d.observation) body.observation = d.observation;
+      if (d.nom_fournisseur) body.nom_fournisseur = d.nom_fournisseur;
+      if (d.mode_paiement==='cheque') body.numero_cheque = d.bank_ref;
+      if (d.mode_paiement==='virement') body.banque = d.bank_ref;
+      return body;
+    }
+  });
+  if (!data) return;
+  const r = await Auth.post(CFG.R.ENCAISSEMENT, data);
+  if (r?.ok) { UI.ok(I18n.t('enc_success')); await Promise.all([loadStats(), loadRecentOps()]); }
+  else await UI.apiErr(r);
+}
+
+async function showDecaissement() {
+  if (!projects.length) {
+    UI.warn(I18n.t('dash_no_projects'));
+    return;
+  }
+  const projOpts = projects.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  const data = await UI.formModal({
+    titleKey:'dec_title', width:520,
+    html: `<div class="swal-form">
+      <div class="field"><label class="label">${I18n.t('dec_project')} <span class="req">*</span></label>
+        <select class="select" name="project_id" required><option value="">—</option>${projOpts}</select></div>
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('enc_amount')} <span class="req">*</span></label>
+          <input class="input" type="number" name="amount" min="0.01" step="0.01" required></div>
+        <div class="field"><label class="label">${I18n.t('lbl_date')} <span class="req">*</span></label>
+          <input class="input" type="date" name="date" required value="${new Date().toISOString().slice(0,10)}"></div>
+      </div>
+      <div class="field"><label class="label">${I18n.t('caisse_mode')}</label>
+        <select class="select" name="mode_paiement" onchange="togglePay(this.value,'enc')">
+          <option value="especes">${I18n.t('caisse_mode_especes')}</option>
+          <option value="cheque">${I18n.t('caisse_mode_cheque')}</option>
+          <option value="virement">${I18n.t('caisse_mode_virement')}</option>
+        </select></div>
+      ${payFieldsHTML('enc')}
+      <div class="field"><label class="label">${I18n.t('lbl_description')}</label>
+        <textarea class="textarea" name="description" rows="2"></textarea></div>
+    </div>`,
+    preConfirm: (d) => {
+      const body = {
+        project_id: parseInt(d.project_id),
+        amount: parseFloat(d.amount),
+        date: d.date,
+        description: d.description||'',
+        mode_paiement: d.mode_paiement
+      };
+      if (d.nom_fournisseur) body.nom_fournisseur = d.nom_fournisseur;
+      if (d.mode_paiement==='cheque') body.numero_cheque = d.bank_ref;
+      if (d.mode_paiement==='virement') body.banque = d.bank_ref;
+      return body;
+    }
+  });
+  if (!data) return;
+  const r = await Auth.post(CFG.R.DECAISSEMENT, data);
+  if (r?.ok) { UI.ok(I18n.t('dec_success')); await Promise.all([loadStats(), loadRecentOps()]); }
+  else await UI.apiErr(r);
+}
+
+function toggleEncSrc(v) {
+  document.getElementById('enc-project-f').style.display  = (v==='projet'||v==='collaborator') ? '' : 'none';
+  document.getElementById('enc-creditor-f').style.display = v==='dette' ? '' : 'none';
+  document.getElementById('enc-obs-f').style.display      = v==='autre' ? '' : 'none';
+}
+function togglePay(mode, prefix) {
+  const wrap = document.getElementById(`${prefix}-pay-extra`);
+  if (!wrap) return;
+  wrap.style.display = mode==='especes' ? 'none' : 'grid';
+  const lbl = document.getElementById(`${prefix}-pay-extra-lbl`);
+  if (lbl) lbl.textContent = mode==='cheque' ? I18n.t('caisse_cheque') : I18n.t('caisse_banque');
+}
+
+async function showNewProject() {
+  const data = await UI.formModal({
+    titleKey:'proj_new', width:520,
+    html: `<div class="swal-form">
+      <div class="field"><label class="label">${I18n.t('proj_name')} <span class="req">*</span></label>
+        <input class="input" name="name" required></div>
+      <div class="field"><label class="label">${I18n.t('proj_description')} <span class="req">*</span></label>
+        <textarea class="textarea" name="description" rows="2" required></textarea></div>
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('proj_budget')} <span class="req">*</span></label>
+          <input class="input" type="number" name="estimated_budget" min="0" step="0.01" required></div>
+        <div class="field"><label class="label">${I18n.t('proj_duration')} <span class="req">*</span></label>
+          <input class="input" type="number" name="period_months" min="1" required value="12"></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('proj_start')} <span class="req">*</span></label>
+          <input class="input" type="date" name="date_debut" required value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="field"><label class="label">${I18n.t('proj_collaborator')}</label>
+          <input class="input" name="collaborator_name"></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('proj_operation')}</label>
+          <input class="input" name="operation"></div>
+        <div class="field"><label class="label">${I18n.t('proj_numero_op')}</label>
+          <input class="input" name="numero_operation"></div>
+      </div>
+    </div>`,
+    preConfirm: (d) => ({
+      name: d.name,
+      description: d.description,
+      estimated_budget: parseFloat(d.estimated_budget),
+      period_months: parseInt(d.period_months),
+      date_debut: d.date_debut,
+      collaborator_name: d.collaborator_name || '',
+      operation: d.operation || '',
+      numero_operation: d.numero_operation || ''
+    })
+  });
+  if (!data) return;
+  const r = await Auth.post(CFG.R.PROJECT_CREATE, data);
+  if (r?.ok) { UI.ok(I18n.t('proj_success_create')); await Promise.all([loadProjects(), loadStats()]); }
+  else await UI.apiErr(r);
+}
+</script>
 </body>
 </html>

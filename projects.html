@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-i18n-title="proj_title">Projets — ECH SAHARA ERP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  .proj-card {
+    background:var(--c-surface);border:1px solid var(--c-border);border-radius:14px;padding:18px;
+    transition:all .2s;cursor:pointer;text-decoration:none;color:inherit;display:block;
+  }
+  .proj-card:hover { border-color:var(--c-primary); box-shadow:var(--shadow); transform:translateY(-2px); }
+  .proj-card h4 { font-size:15px;font-weight:600;color:var(--c-text);margin-bottom:6px;display:flex;align-items:center;gap:8px; }
+  .proj-card .pdesc { font-size:13px;color:var(--c-text-2);margin-bottom:14px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
+  .proj-stats { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:11.5px; }
+  .proj-stats > div { text-align:center;padding:8px 4px;border-radius:8px;background:var(--c-surface-2); }
+  .proj-stats .lbl { color:var(--c-text-3);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px; }
+  .proj-stats .val { font-weight:600;font-size:12.5px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar"></aside>
+  <div class="main">
+    <header class="topbar"></header>
+    <div class="content">
+      <div class="page-head">
+        <div>
+          <h2 data-i18n="proj_title">Projets</h2>
+          <p class="sub" data-i18n="proj_subtitle">Gestion de vos projets</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="showNew()"><i class="fas fa-plus"></i> <span data-i18n="proj_new">Nouveau projet</span></button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-body" style="padding:14px;">
+          <div class="input-icon" style="max-width:400px;">
+            <i class="fas fa-search"></i>
+            <input class="input" id="search" data-i18n-ph="btn_search" oninput="renderProjects()">
+          </div>
+        </div>
+      </div>
+
+      <div id="projsGrid" class="grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));">
+        <div class="loader-wrap" style="grid-column:1/-1;"><div class="loader"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/ui.js"></script>
+<script>
+let projects = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!UI.init('nav_projects','proj_title')) return;
+  I18n.init();
+  await loadProj();
+});
+
+async function loadProj() {
+  try { projects = await Auth.get(CFG.R.PROJECTS); renderProjects(); }
+  catch { document.getElementById('projsGrid').innerHTML = `<div class="table-empty" style="grid-column:1/-1;"><i class="fas fa-circle-exclamation"></i><p>${I18n.t('err_load')}</p></div>`; }
+}
+
+function renderProjects() {
+  const grid = document.getElementById('projsGrid');
+  const q = (document.getElementById('search').value||'').toLowerCase();
+  const list = projects.filter(p => !q || p.name.toLowerCase().includes(q) || (p.description||'').toLowerCase().includes(q));
+  if (!list.length) { grid.innerHTML = `<div class="table-empty" style="grid-column:1/-1;"><i class="fas fa-diagram-project"></i><p data-i18n="lbl_no_data">${I18n.t('lbl_no_data')}</p></div>`; return; }
+  grid.innerHTML = list.map(p => `
+    <a href="project-detail.html?id=${p.id}" class="proj-card">
+      <h4><i class="fas fa-folder text-accent"></i> ${escapeHtml(p.name)}</h4>
+      <p class="pdesc">${escapeHtml(p.description||'')}</p>
+      <div class="proj-stats">
+        <div><div class="lbl" data-i18n="proj_depenses">Dépenses</div><div class="val text-danger">${UI.fmtAmount(p.total_depenses)}</div></div>
+        <div><div class="lbl" data-i18n="proj_accreance">Accréances</div><div class="val text-success">${UI.fmtAmount(p.total_accreance)}</div></div>
+        <div><div class="lbl" data-i18n="proj_benefices">Bénéfices</div><div class="val text-primary">${UI.fmtAmount(p.total_benefices)}</div></div>
+      </div>
+    </a>
+  `).join('');
+}
+
+function escapeHtml(s) { return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function showNew() {
+  const data = await UI.formModal({
+    titleKey:'proj_new', width:520,
+    html: `<div class="swal-form">
+      <div class="field"><label class="label">${I18n.t('proj_name')} <span class="req">*</span></label>
+        <input class="input" name="name" required></div>
+      <div class="field"><label class="label">${I18n.t('proj_description')} <span class="req">*</span></label>
+        <textarea class="textarea" name="description" rows="2" required></textarea></div>
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('proj_budget')} <span class="req">*</span></label>
+          <input class="input" type="number" name="estimated_budget" min="0" step="0.01" required></div>
+        <div class="field"><label class="label">${I18n.t('proj_duration')} <span class="req">*</span></label>
+          <input class="input" type="number" name="period_months" min="1" value="12" required></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('proj_start')} <span class="req">*</span></label>
+          <input class="input" type="date" name="date_debut" required value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="field"><label class="label">${I18n.t('proj_collaborator')}</label>
+          <input class="input" name="collaborator_name"></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('proj_operation')}</label>
+          <input class="input" name="operation"></div>
+        <div class="field"><label class="label">${I18n.t('proj_numero_op')}</label>
+          <input class="input" name="numero_operation"></div>
+      </div>
+    </div>`,
+    preConfirm: (d) => ({
+      name: d.name,
+      description: d.description,
+      estimated_budget: parseFloat(d.estimated_budget),
+      period_months: parseInt(d.period_months),
+      date_debut: d.date_debut,
+      collaborator_name: d.collaborator_name||'',
+      operation: d.operation||'',
+      numero_operation: d.numero_operation||''
+    })
+  });
+  if (!data) return;
+  const r = await Auth.post(CFG.R.PROJECT_CREATE, data);
+  if (r?.ok) { UI.ok(I18n.t('proj_success_create')); await loadProj(); }
+  else await UI.apiErr(r);
+}
+</script>
+</body>
+</html>

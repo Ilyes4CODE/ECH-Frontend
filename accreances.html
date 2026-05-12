@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-i18n-title="acc_title">Accréances — ECH SAHARA ERP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar"></aside>
+  <div class="main">
+    <header class="topbar"></header>
+    <div class="content">
+      <div class="page-head">
+        <div>
+          <h2 data-i18n="acc_title">Accréances</h2>
+          <p class="sub" data-i18n="acc_subtitle">Revenus par projet</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="showNew()" id="newBtn" disabled><i class="fas fa-plus"></i> <span data-i18n="acc_new">Nouvelle accréance</span></button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-body" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+          <label class="label" style="margin:0;white-space:nowrap;" data-i18n="lbl_project">Projet :</label>
+          <select id="projSel" class="select" style="flex:1;min-width:240px;max-width:400px;" onchange="loadAcc()">
+            <option value="" data-i18n="acc_select_project">Sélectionner un projet...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="stat-row">
+          <div><div class="stat-label" data-i18n="acc_total">Total</div><div class="stat-value text-success" id="s-total">—</div></div>
+          <div class="stat-icon success"><i class="fas fa-arrow-trend-up"></i></div>
+        </div></div>
+        <div class="stat"><div class="stat-row">
+          <div><div class="stat-label" data-i18n="acc_count">Nombre</div><div class="stat-value" id="s-count">—</div></div>
+          <div class="stat-icon primary"><i class="fas fa-hashtag"></i></div>
+        </div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3 data-i18n="acc_title">Accréances</h3></div>
+        <div id="tableBox">
+          <div class="table-empty"><i class="fas fa-arrow-pointer"></i><p data-i18n="acc_select_project">Sélectionner un projet</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/ui.js"></script>
+<script>
+let accList = [], projects = [], curProj = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!UI.init('nav_accreances','acc_title')) return;
+  I18n.init();
+  projects = await Auth.get(CFG.R.PROJECTS).catch(()=>[]);
+  const sel = document.getElementById('projSel');
+  projects.forEach(p => sel.innerHTML += `<option value="${p.id}">${escapeHtml(p.name)}</option>`);
+});
+
+async function loadAcc() {
+  curProj = document.getElementById('projSel').value;
+  const newBtn = document.getElementById('newBtn');
+  newBtn.disabled = !curProj;
+  const box = document.getElementById('tableBox');
+  if (!curProj) {
+    box.innerHTML = `<div class="table-empty"><i class="fas fa-arrow-pointer"></i><p data-i18n="acc_select_project">${I18n.t('acc_select_project')}</p></div>`;
+    document.getElementById('s-total').textContent='—';
+    document.getElementById('s-count').textContent='—';
+    return;
+  }
+  box.innerHTML = `<div class="loader-wrap"><div class="loader"></div></div>`;
+  try {
+    const d = await Auth.get(CFG.R.REVENUS(curProj));
+    accList = d.revenus || d;
+    const total = accList.reduce((s,r)=>s+parseFloat(r.montant||0),0);
+    document.getElementById('s-total').textContent = UI.fmtAmount(total);
+    document.getElementById('s-count').textContent = accList.length;
+    render();
+  } catch { box.innerHTML = `<div class="table-empty"><i class="fas fa-circle-exclamation text-danger"></i><p>${I18n.t('err_load')}</p></div>`; }
+}
+
+function render() {
+  const box = document.getElementById('tableBox');
+  if (!accList.length) {
+    box.innerHTML = `<div class="table-empty"><i class="fas fa-arrow-trend-up"></i><p data-i18n="lbl_no_data">${I18n.t('lbl_no_data')}</p></div>`;
+    return;
+  }
+  box.innerHTML = `<div class="table-scroll"><table class="table">
+    <thead><tr>
+      <th data-i18n="acc_code">${I18n.t('acc_code')}</th>
+      <th data-i18n="lbl_amount">${I18n.t('lbl_amount')}</th>
+      <th data-i18n="lbl_date">${I18n.t('lbl_date')}</th>
+      <th data-i18n="acc_pdf">${I18n.t('acc_pdf')}</th>
+      <th data-i18n="lbl_actions">${I18n.t('lbl_actions')}</th>
+    </tr></thead>
+    <tbody>${accList.map(r=>`<tr>
+      <td><span class="fw-600">${escapeHtml(r.revenu_code||'—')}</span></td>
+      <td class="fw-600 text-success">${UI.fmtAmount(r.montant)}</td>
+      <td style="color:var(--c-text-2);">${UI.fmtDate(r.date)}</td>
+      <td>${r.pdf_file ? `<a href="${CFG.API}${r.pdf_file}" target="_blank" class="text-danger"><i class="fas fa-file-pdf"></i></a>` : '<span style="color:var(--c-text-3);">—</span>'}</td>
+      <td><div class="table-actions">
+        <button class="btn btn-ghost btn-sm" onclick="del(${r.id})" style="color:var(--c-danger);"><i class="fas fa-trash"></i></button>
+      </div></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function escapeHtml(s) { return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function showNew() {
+  if (!curProj) return;
+  const r = await Swal.fire({
+    title: I18n.t('acc_new'), width:520,
+    html: `<div class="swal-form">
+      <div class="field"><label class="label">${I18n.t('acc_code')} <span class="req">*</span></label>
+        <input class="input" id="a-code" required placeholder="REV-2025-001"></div>
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('lbl_amount')} <span class="req">*</span></label>
+          <input class="input" id="a-amount" type="number" min="0.01" step="0.01" required></div>
+        <div class="field"><label class="label">${I18n.t('lbl_date')} <span class="req">*</span></label>
+          <input class="input" id="a-date" type="date" required value="${new Date().toISOString().slice(0,10)}"></div>
+      </div>
+      <div class="field"><label class="label">${I18n.t('acc_upload')}</label>
+        <input class="input" id="a-pdf" type="file" accept=".pdf"></div>
+    </div>`,
+    showCancelButton: true,
+    confirmButtonText: I18n.t('btn_save'),
+    cancelButtonText: I18n.t('btn_cancel'),
+    reverseButtons: I18n.lang === 'ar',
+    preConfirm: () => {
+      const code = document.getElementById('a-code').value.trim();
+      const amt  = document.getElementById('a-amount').value;
+      const date = document.getElementById('a-date').value;
+      if (!code || !amt || !date) { Swal.showValidationMessage(I18n.t('err_required')); return false; }
+      const fd = new FormData();
+      fd.append('project_id', curProj);
+      fd.append('revenu_code', code);
+      fd.append('montant', amt);
+      fd.append('date', date);
+      const file = document.getElementById('a-pdf').files[0];
+      if (file) fd.append('pdf_file', file);
+      return fd;
+    }
+  });
+  if (!r.isConfirmed) return;
+  const res = await Auth.post(CFG.R.REVENU_CREATE, r.value, true);
+  if (res?.ok) { UI.ok(I18n.t('acc_success_create')); await loadAcc(); }
+  else await UI.apiErr(res);
+}
+
+async function del(id) {
+  if (!await UI.confirmDelete()) return;
+  const r = await Auth.del(CFG.R.REVENU_DELETE(id));
+  if (r?.ok) { UI.ok(I18n.t('btn_delete')+' ✓'); await loadAcc(); } else await UI.apiErr(r);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-i18n-title="pd_title">Détails projet — ECH SAHARA ERP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  .tabs { display:flex;gap:4px;border-bottom:1px solid var(--c-border);margin-bottom:20px; }
+  .tab-btn { padding:10px 16px;background:none;border:none;border-bottom:2px solid transparent;font-family:inherit;font-size:13.5px;font-weight:500;color:var(--c-text-2);cursor:pointer;transition:all .15s; }
+  .tab-btn:hover { color:var(--c-text); }
+  .tab-btn.active { color:var(--c-primary);border-bottom-color:var(--c-primary); }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar"></aside>
+  <div class="main">
+    <header class="topbar"></header>
+    <div class="content">
+
+      <a href="projects.html" class="btn btn-ghost btn-sm" style="margin-bottom:16px;"><i class="fas fa-arrow-left"></i> <span data-i18n="pd_back">Retour</span></a>
+
+      <div class="page-head">
+        <div>
+          <h2 id="pName">—</h2>
+          <p class="sub" id="pDesc">—</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-ghost" onclick="downloadProjectPDF()"><i class="fas fa-tag"></i> <span data-i18n="btn_pdf">PDF</span></button>
+          <button class="btn btn-accent" onclick="exportFinancePDF()"><i class="fas fa-file-pdf"></i> <span data-i18n="pd_export">Exporter</span></button>
+          <button class="btn btn-primary" onclick="editProject()"><i class="fas fa-pen"></i> <span data-i18n="btn_edit">Modifier</span></button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="stat-row">
+          <div><div class="stat-label" data-i18n="proj_budget">Budget</div><div class="stat-value" id="pBudget">—</div></div>
+          <div class="stat-icon primary"><i class="fas fa-wallet"></i></div>
+        </div></div>
+        <div class="stat"><div class="stat-row">
+          <div><div class="stat-label" data-i18n="proj_depenses">Dépenses</div><div class="stat-value text-danger" id="pDep">—</div></div>
+          <div class="stat-icon danger"><i class="fas fa-arrow-down"></i></div>
+        </div></div>
+        <div class="stat"><div class="stat-row">
+          <div><div class="stat-label" data-i18n="proj_accreance">Accréances</div><div class="stat-value text-success" id="pAcc">—</div></div>
+          <div class="stat-icon success"><i class="fas fa-arrow-up"></i></div>
+        </div></div>
+        <div class="stat"><div class="stat-row">
+          <div><div class="stat-label" data-i18n="proj_benefices">Bénéfices</div><div class="stat-value" id="pBen">—</div></div>
+          <div class="stat-icon info"><i class="fas fa-arrow-trend-up"></i></div>
+        </div></div>
+      </div>
+
+      <div class="grid grid-3" style="margin-bottom:20px;">
+        <div class="card"><div class="card-body">
+          <div class="stat-label" data-i18n="proj_start">Date de début</div>
+          <div id="pStart" style="font-size:14px;font-weight:600;margin-top:6px;">—</div>
+        </div></div>
+        <div class="card"><div class="card-body">
+          <div class="stat-label" data-i18n="proj_duration">Durée</div>
+          <div id="pDur" style="font-size:14px;font-weight:600;margin-top:6px;">—</div>
+        </div></div>
+        <div class="card"><div class="card-body">
+          <div class="stat-label" data-i18n="proj_collaborator">Collaborateur</div>
+          <div id="pColl" style="font-size:14px;font-weight:600;margin-top:6px;">—</div>
+        </div></div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="history" onclick="setTab('history')"><i class="fas fa-clock-rotate-left"></i> <span data-i18n="pd_history">Historique</span></button>
+        <button class="tab-btn" data-tab="revenus" onclick="setTab('revenus')"><i class="fas fa-arrow-trend-up"></i> <span data-i18n="pd_revenus">Accréances</span></button>
+      </div>
+
+      <div id="tab-history">
+        <div class="card">
+          <div class="card-head">
+            <h3 data-i18n="pd_history">Historique caisse</h3>
+            <button class="btn btn-primary btn-sm" onclick="showOpForm()"><i class="fas fa-plus"></i> <span data-i18n="pd_new_op">Nouvelle opération</span></button>
+          </div>
+          <div class="table-scroll">
+            <table class="table">
+              <thead><tr>
+                <th data-i18n="caisse_numero">N°</th>
+                <th data-i18n="lbl_date">Date</th>
+                <th data-i18n="lbl_type">Type</th>
+                <th data-i18n="lbl_amount">Montant</th>
+                <th data-i18n="lbl_description">Description</th>
+              </tr></thead>
+              <tbody id="histBody"><tr><td colspan="5"><div class="loader-wrap"><div class="loader"></div></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-revenus" class="hidden">
+        <div class="card">
+          <div class="card-head">
+            <h3 data-i18n="pd_revenus">Accréances</h3>
+            <a href="accreances.html" class="btn btn-ghost btn-sm"><i class="fas fa-external-link"></i> <span data-i18n="btn_view">Voir</span></a>
+          </div>
+          <div class="table-scroll">
+            <table class="table">
+              <thead><tr>
+                <th data-i18n="acc_code">Code</th>
+                <th data-i18n="lbl_amount">Montant</th>
+                <th data-i18n="lbl_date">Date</th>
+                <th data-i18n="acc_pdf">PDF</th>
+              </tr></thead>
+              <tbody id="revBody"><tr><td colspan="4"><div class="loader-wrap"><div class="loader"></div></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/ui.js"></script>
+<script>
+const pid = new URLSearchParams(location.search).get('id') || new URLSearchParams(location.search).get('project_id');
+if (!pid) location.href = 'projects.html';
+
+let project = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!UI.init('nav_projects','pd_title')) return;
+  I18n.init();
+  await Promise.all([loadProj(), loadHist(), loadRev()]);
+});
+
+async function loadProj() {
+  try {
+    project = await Auth.get(CFG.R.PROJECT(pid));
+    document.getElementById('pName').textContent  = project.name;
+    document.getElementById('pDesc').textContent  = project.description || '';
+    document.getElementById('pBudget').textContent = UI.fmtAmount(project.estimated_budget);
+    document.getElementById('pDep').textContent    = UI.fmtAmount(project.total_depenses);
+    document.getElementById('pAcc').textContent    = UI.fmtAmount(project.total_accreance);
+    document.getElementById('pBen').textContent    = UI.fmtAmount(project.total_benefices);
+    document.getElementById('pStart').textContent  = UI.fmtDate(project.date_debut);
+    document.getElementById('pDur').textContent    = (project.period_months||'—') + ' mois';
+    document.getElementById('pColl').textContent   = project.collaborator_name || '—';
+  } catch { UI.err(I18n.t('err_load')); }
+}
+
+async function loadHist() {
+  const tb = document.getElementById('histBody');
+  try {
+    const d = await Auth.get(CFG.R.CAISSE_HISTORY + '?project_id=' + pid + '&page_size=50&ordering=-created_at');
+    const ops = d.results || d || [];
+    if (!ops.length) { tb.innerHTML = UI.emptyRow(5, 'fa-receipt'); return; }
+    tb.innerHTML = ops.map(o => `<tr>
+      <td><span class="fw-600">${o.numero||'—'}</span></td>
+      <td style="color:var(--c-text-2);">${UI.fmtDate(o.date||o.created_at)}</td>
+      <td><span class="badge ${o.action==='encaissement'?'success':'danger'}">${o.action==='encaissement'?I18n.t('caisse_encaissement'):I18n.t('caisse_decaissement')}</span></td>
+      <td class="fw-600 ${o.action==='encaissement'?'text-success':'text-danger'}">${UI.fmtAmount(o.amount)}</td>
+      <td style="color:var(--c-text-2);font-size:12.5px;">${escapeHtml(o.description||'—')}</td>
+    </tr>`).join('');
+  } catch { tb.innerHTML = UI.emptyRow(5,'fa-circle-exclamation','err_load'); }
+}
+
+async function loadRev() {
+  const tb = document.getElementById('revBody');
+  try {
+    const d = await Auth.get(CFG.R.REVENUS(pid));
+    const list = d.revenus || d || [];
+    if (!list.length) { tb.innerHTML = UI.emptyRow(4, 'fa-arrow-trend-up'); return; }
+    tb.innerHTML = list.map(r => `<tr>
+      <td><span class="fw-600">${escapeHtml(r.revenu_code||'—')}</span></td>
+      <td class="fw-600 text-success">${UI.fmtAmount(r.montant)}</td>
+      <td style="color:var(--c-text-2);">${UI.fmtDate(r.date)}</td>
+      <td>${r.pdf_file?`<a href="${CFG.API}${r.pdf_file}" target="_blank" class="text-danger"><i class="fas fa-file-pdf"></i></a>`:'—'}</td>
+    </tr>`).join('');
+  } catch { tb.innerHTML = UI.emptyRow(4,'fa-circle-exclamation','err_load'); }
+}
+
+function setTab(t) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===t));
+  document.getElementById('tab-history').classList.toggle('hidden', t!=='history');
+  document.getElementById('tab-revenus').classList.toggle('hidden', t!=='revenus');
+}
+
+function escapeHtml(s) { return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s) { return (s||'').toString().replace(/"/g,'&quot;'); }
+
+async function editProject() {
+  const data = await UI.formModal({
+    titleKey:'btn_edit', width:520,
+    html: `<div class="swal-form">
+      <div class="field"><label class="label">${I18n.t('proj_name')} <span class="req">*</span></label>
+        <input class="input" name="name" required value="${escapeAttr(project.name)}"></div>
+      <div class="field"><label class="label">${I18n.t('proj_description')}</label>
+        <textarea class="textarea" name="description" rows="2">${escapeHtml(project.description||'')}</textarea></div>
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('proj_budget')}</label>
+          <input class="input" type="number" name="estimated_budget" min="0" step="0.01" value="${project.estimated_budget||0}"></div>
+        <div class="field"><label class="label">${I18n.t('proj_collaborator')}</label>
+          <input class="input" name="collaborator_name" value="${escapeAttr(project.collaborator_name||'')}"></div>
+      </div>
+    </div>`,
+    preConfirm: (d) => ({
+      name: d.name,
+      description: d.description,
+      estimated_budget: parseFloat(d.estimated_budget),
+      collaborator_name: d.collaborator_name||''
+    })
+  });
+  if (!data) return;
+  const r = await Auth.put(CFG.R.PROJECT_UPDATE(pid), data);
+  if (r?.ok) { UI.ok(I18n.t('proj_success_update')); await loadProj(); }
+  else await UI.apiErr(r);
+}
+
+async function showOpForm() {
+  const data = await UI.formModal({
+    titleKey:'pd_new_op', width:520,
+    html: `<div class="swal-form">
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('lbl_type')} <span class="req">*</span></label>
+          <select class="select" name="op_type">
+            <option value="encaissement">${I18n.t('caisse_encaissement')}</option>
+            <option value="decaissement">${I18n.t('caisse_decaissement')}</option>
+          </select></div>
+        <div class="field"><label class="label">${I18n.t('lbl_date')} <span class="req">*</span></label>
+          <input class="input" type="date" name="date" required value="${new Date().toISOString().slice(0,10)}"></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('enc_amount')} <span class="req">*</span></label>
+          <input class="input" type="number" name="amount" min="0.01" step="0.01" required></div>
+        <div class="field"><label class="label">${I18n.t('caisse_mode')}</label>
+          <select class="select" name="mode_paiement">
+            <option value="especes">${I18n.t('caisse_mode_especes')}</option>
+            <option value="cheque">${I18n.t('caisse_mode_cheque')}</option>
+            <option value="virement">${I18n.t('caisse_mode_virement')}</option>
+          </select></div>
+      </div>
+      <div class="field"><label class="label">${I18n.t('lbl_description')}</label>
+        <textarea class="textarea" name="description" rows="2"></textarea></div>
+    </div>`,
+    preConfirm: (d) => {
+      const body = {
+        project_id: parseInt(pid),
+        amount: parseFloat(d.amount),
+        date: d.date,
+        description: d.description||'',
+        mode_paiement: d.mode_paiement,
+        income_source: 'projet'
+      };
+      body._isEnc = d.op_type === 'encaissement';
+      return body;
+    }
+  });
+  if (!data) return;
+  const isEnc = data._isEnc;
+  delete data._isEnc;
+  const r = await Auth.post(isEnc ? CFG.R.ENCAISSEMENT : CFG.R.DECAISSEMENT, data);
+  if (r?.ok) { UI.ok(I18n.t(isEnc?'enc_success':'dec_success')); await Promise.all([loadProj(), loadHist()]); }
+  else await UI.apiErr(r);
+}
+
+async function downloadProjectPDF() { try { await Auth.download(CFG.R.PROJECT_PDF(pid)); } catch { UI.err(I18n.t('err_load')); } }
+
+async function exportFinancePDF() {
+  // POST endpoint
+  try {
+    const res = await Auth.fetch(CFG.R.FINANCE_PDF, { method:'POST', body: JSON.stringify({ project_id: parseInt(pid) }) });
+    if (!res || !res.ok) { await UI.apiErr(res); return; }
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `rapport_${project?.name||'projet'}.pdf`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch { UI.err(I18n.t('err_load')); }
+}
+</script>
+</body>
+</html>

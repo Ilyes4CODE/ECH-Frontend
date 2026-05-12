@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-i18n-title="bc_title">Bons de commande — ECH SAHARA ERP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar"></aside>
+  <div class="main">
+    <header class="topbar"></header>
+    <div class="content">
+      <div class="page-head">
+        <div>
+          <h2 data-i18n="bc_title">Bons de commande</h2>
+          <p class="sub" data-i18n="bc_subtitle">Commandes fournisseurs</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="showBC()"><i class="fas fa-plus"></i> <span data-i18n="bc_new">Nouveau BC</span></button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="stat-row">
+          <div><div class="stat-label" data-i18n="bc_title">Total BC</div><div class="stat-value" id="s-total">—</div></div>
+          <div class="stat-icon primary"><i class="fas fa-file-invoice"></i></div>
+        </div></div>
+        <div class="stat"><div class="stat-row">
+          <div><div class="stat-label" data-i18n="bc_total_ht">Total HT</div><div class="stat-value" id="s-amount">—</div></div>
+          <div class="stat-icon success"><i class="fas fa-coins"></i></div>
+        </div></div>
+        <div class="stat"><div class="stat-row">
+          <div><div class="stat-label">Ce mois</div><div class="stat-value" id="s-month">—</div></div>
+          <div class="stat-icon warning"><i class="fas fa-calendar-days"></i></div>
+        </div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3 data-i18n="bc_title">Liste</h3>
+          <div class="filter-bar" style="margin:0;flex-wrap:wrap;">
+            <div class="input-icon" style="min-width:200px;">
+              <i class="fas fa-search"></i>
+              <input class="input" id="f-search" data-i18n-ph="btn_search" oninput="applyFilters()" placeholder="N° BC, Doit, description...">
+            </div>
+            <input type="date" class="input" id="f-from" style="width:160px;" onchange="applyFilters()" title="Date début">
+            <input type="date" class="input" id="f-to" style="width:160px;" onchange="applyFilters()" title="Date fin">
+            <button class="btn btn-ghost btn-sm" onclick="resetFilters()"><i class="fas fa-rotate-left"></i> <span data-i18n="btn_clear">Effacer</span></button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="table">
+            <thead><tr>
+              <th data-i18n="bc_number">N° BC</th>
+              <th data-i18n="bc_doit">Doit</th>
+              <th data-i18n="bc_total_ht">Total HT</th>
+              <th>Articles</th>
+              <th data-i18n="lbl_date">Date</th>
+              <th data-i18n="lbl_actions">Actions</th>
+            </tr></thead>
+            <tbody id="bcBody">
+              <tr><td colspan="6"><div class="loader-wrap"><div class="loader"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/ui.js"></script>
+<script>
+let bcList = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!UI.init('nav_bc','bc_title')) return;
+  I18n.init();
+  await loadBC();
+});
+
+async function loadBC() {
+  const tb = document.getElementById('bcBody');
+  tb.innerHTML = `<tr><td colspan="6"><div class="loader-wrap"><div class="loader"></div></div></td></tr>`;
+  try {
+    bcList = await Auth.get(CFG.R.BC_LIST);
+    const total = bcList.reduce((s,b)=>s+parseFloat(b.total_ht||0),0);
+    const m = new Date().toISOString().slice(0,7);
+    document.getElementById('s-total').textContent  = bcList.length;
+    document.getElementById('s-amount').textContent = UI.fmtAmount(total);
+    document.getElementById('s-month').textContent  = bcList.filter(b => (b.created_at||b.date_commande||'').startsWith(m)).length;
+    applyFilters();
+  } catch { tb.innerHTML = UI.emptyRow(6, 'fa-circle-exclamation', 'err_load'); }
+}
+
+function applyFilters() {
+  const q    = (document.getElementById('f-search')?.value||'').toLowerCase().trim();
+  const from = document.getElementById('f-from')?.value;
+  const to   = document.getElementById('f-to')?.value;
+  const filtered = bcList.filter(b => {
+    if (q) {
+      const hay = [b.bc_number||'', b.doit||'', b.description||''].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    const d = (b.date_commande || b.created_at || '').slice(0,10);
+    if (from && d && d < from) return false;
+    if (to   && d && d > to)   return false;
+    return true;
+  });
+  render(filtered);
+}
+
+function resetFilters() {
+  document.getElementById('f-search').value = '';
+  document.getElementById('f-from').value = '';
+  document.getElementById('f-to').value = '';
+  applyFilters();
+}
+
+function render(list) {
+  const tb = document.getElementById('bcBody');
+  list = list || bcList;
+  if (!list.length) { tb.innerHTML = UI.emptyRow(6, 'fa-file-invoice'); return; }
+  tb.innerHTML = list.map(b => `<tr>
+    <td><span class="fw-600">${escapeHtml(b.bc_number||'—')}</span></td>
+    <td>${escapeHtml(b.doit||'—')}</td>
+    <td class="fw-600 text-success">${UI.fmtAmount(b.total_ht)}</td>
+    <td><span class="badge muted">${(b.items_count||b.items?.length||0)}</span></td>
+    <td style="color:var(--c-text-2);">${UI.fmtDate(b.date_commande||b.created_at)}</td>
+    <td><div class="table-actions">
+      <button class="btn btn-ghost btn-sm" onclick="downloadPDF(${b.id})"><i class="fas fa-file-pdf text-danger"></i></button>
+      <button class="btn btn-ghost btn-sm" onclick="showBC(${b.id})"><i class="fas fa-pen"></i></button>
+      <button class="btn btn-ghost btn-sm" onclick="del(${b.id})" style="color:var(--c-danger);"><i class="fas fa-trash"></i></button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function escapeHtml(s) { return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s) { return (s||'').toString().replace(/"/g,'&quot;'); }
+
+async function showBC(id = null) {
+  const bc = id ? bcList.find(b=>b.id===id) : null;
+  const items = bc?.items || [{designation:'',quantity:1,prix_unitaire:0}];
+  const itemsHTML = items.map(it => itemRow(it.designation||it.product_name||'', it.quantity||1, it.prix_unitaire||0)).join('');
+
+  const r = await Swal.fire({
+    title: I18n.t(id?'btn_edit':'bc_new'),
+    width: 680,
+    html: `<div class="swal-form">
+      <div class="field"><label class="label">${I18n.t('bc_doit')} <span class="req">*</span></label>
+        <input class="input" id="bc-doit" required value="${escapeAttr(bc?.doit||'')}"></div>
+      <div class="field"><label class="label">${I18n.t('lbl_description')}</label>
+        <textarea class="textarea" id="bc-desc" rows="2">${escapeHtml(bc?.description||'')}</textarea></div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 6px;">
+        <strong style="font-size:13px;">${I18n.t('bl_items')}</strong>
+        <button type="button" class="btn btn-soft btn-sm" onclick="addBCItem()"><i class="fas fa-plus"></i> ${I18n.t('bl_add_item')}</button>
+      </div>
+      <div id="bc-items">${itemsHTML}</div>
+
+      <div style="background:var(--c-surface-2);border-radius:10px;padding:12px;margin-top:14px;display:flex;justify-content:space-between;align-items:center;">
+        <strong>${I18n.t('bc_total_ht')}</strong>
+        <strong id="bc-total" style="font-size:16px;color:var(--c-primary);">0.00 DA</strong>
+      </div>
+    </div>`,
+    showCancelButton: true,
+    confirmButtonText: I18n.t('btn_save'),
+    cancelButtonText: I18n.t('btn_cancel'),
+    reverseButtons: I18n.lang === 'ar',
+    didOpen: () => calcBC(),
+    preConfirm: () => {
+      const doit = document.getElementById('bc-doit').value.trim();
+      if (!doit) { Swal.showValidationMessage(I18n.t('err_required')); return false; }
+      const items = [];
+      document.querySelectorAll('.bc-item-row').forEach(r => {
+        const name = r.querySelector('[data-f=name]').value.trim();
+        const qty  = parseFloat(r.querySelector('[data-f=qty]').value);
+        const up   = parseFloat(r.querySelector('[data-f=up]').value);
+        if (name && !isNaN(qty) && !isNaN(up)) items.push({ name, quantity: qty, prix_unitaire: up });
+      });
+      if (!items.length) { Swal.showValidationMessage(I18n.t('err_required')); return false; }
+      return { doit, description: document.getElementById('bc-desc').value, items };
+    }
+  });
+  if (!r.isConfirmed) return;
+  const res = id ? await Auth.put(CFG.R.BC_UPDATE(id), r.value) : await Auth.post(CFG.R.BC_CREATE, r.value);
+  if (res?.ok) { UI.ok(I18n.t(id?'bc_success_update':'bc_success_create')); await loadBC(); }
+  else await UI.apiErr(res);
+}
+
+function itemRow(name='', qty=1, up=0) {
+  return `<div class="bc-item-row" style="display:grid;grid-template-columns:1fr 80px 110px 110px 32px;gap:6px;margin-bottom:6px;align-items:center;">
+    <input class="input" data-f="name" placeholder="${I18n.t('bc_designation')}" value="${escapeAttr(name)}" oninput="calcBC()">
+    <input class="input" data-f="qty" type="number" min="0" step="0.01" value="${qty}" oninput="calcBC()">
+    <input class="input" data-f="up" type="number" min="0" step="0.01" value="${up}" oninput="calcBC()">
+    <span class="row-total" style="font-size:13px;font-weight:600;color:var(--c-primary);text-align:right;">0.00</span>
+    <button type="button" onclick="this.closest('.bc-item-row').remove();calcBC();" style="width:28px;height:28px;border:none;border-radius:6px;background:var(--c-danger-bg);color:var(--c-danger);cursor:pointer;"><i class="fas fa-xmark"></i></button>
+  </div>`;
+}
+function addBCItem() { document.getElementById('bc-items').insertAdjacentHTML('beforeend', itemRow()); }
+function calcBC() {
+  let t = 0;
+  document.querySelectorAll('.bc-item-row').forEach(r => {
+    const q = parseFloat(r.querySelector('[data-f=qty]').value)||0;
+    const u = parseFloat(r.querySelector('[data-f=up]').value)||0;
+    const lt = q*u;
+    r.querySelector('.row-total').textContent = lt.toFixed(2);
+    t += lt;
+  });
+  document.getElementById('bc-total').textContent = UI.fmtAmount(t);
+}
+
+async function downloadPDF(id) { try { await Auth.download(CFG.R.BC_PDF(id)); } catch { UI.err(I18n.t('err_load')); } }
+async function del(id) {
+  if (!await UI.confirmDelete()) return;
+  const r = await Auth.del(CFG.R.BC_DELETE(id));
+  if (r?.ok) { UI.ok(I18n.t('btn_delete')+' ✓'); await loadBC(); } else await UI.apiErr(r);
+}
+</script>
+</body>
+</html>

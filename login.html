@@ -1,232 +1,320 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" dir="ltr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion - ERP Génie Civil</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class'
-        }
-    </script>
-    <style>
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-        }
-        
-        .floating { animation: float 6s ease-in-out infinite; }
-        
-        .theme-transition {
-            transition: all 0.3s ease;
-        }
-        
-        .login-card {
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .dark .login-card {
-            background: rgba(31, 41, 55, 0.95);
-            border: 1px solid rgba(75, 85, 99, 0.3);
-        }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-i18n-title="login_title">Connexion — ECH SAHARA ERP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="css/app.css">
+<style>
+  body { display:flex; min-height:100vh; background:var(--c-bg); overflow-x:hidden; }
+  .login-left {
+    width: 48%;
+    background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 60%, #1E40AF 100%);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px;
+    color: #fff;
+  }
+  @media (max-width: 900px) { .login-left { display: none; } }
+
+  /* Decorative grid */
+  .grid-deco {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+  }
+  .orb {
+    position: absolute; border-radius: 50%; filter: blur(80px); opacity: .25;
+  }
+  .orb-1 { width:400px;height:400px;background:#EA580C;top:-120px;left:-120px;animation:drift 14s ease-in-out infinite; }
+  .orb-2 { width:320px;height:320px;background:#3B82F6;bottom:-100px;right:-100px;animation:drift 18s ease-in-out infinite reverse; }
+  @keyframes drift { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(30px,-20px) scale(1.1);} }
+
+  .brand-box { position: relative; z-index:1; }
+  .brand-logo {
+    width:64px;height:64px;border-radius:18px;
+    background: linear-gradient(135deg, #EA580C, #C2410C);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 12px 32px rgba(234,88,12,.45);
+    margin-bottom:24px;
+  }
+  .brand-logo i { font-size:24px; color:#fff; }
+  .brand-name { font-size:32px; font-weight:800; letter-spacing:-.02em; margin-bottom:8px; }
+  .brand-tagline { font-size:15px; color:rgba(255,255,255,.7); max-width:380px; line-height:1.6; }
+
+  .features { margin-top:48px; display:flex; flex-direction:column; gap:14px; max-width:380px; }
+  .feature {
+    display:flex; align-items:center; gap:14px;
+    padding:14px 16px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:12px;
+    backdrop-filter:blur(10px);
+    transition: all .25s;
+  }
+  .feature:hover { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.15); transform:translateX(4px); }
+  .feature-ico { width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+  .feature h4 { font-size:14px;font-weight:600;margin-bottom:2px; }
+  .feature p  { font-size:12.5px;color:rgba(255,255,255,.55); }
+
+  .login-right {
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    padding:40px;
+    position:relative;
+  }
+  .lang-corner { position: absolute; top: 20px; right: 24px; }
+  [dir="rtl"] .lang-corner { right: auto; left: 24px; }
+
+  .login-card {
+    width: 100%;
+    max-width: 420px;
+  }
+  .login-mobile-brand {
+    display:none;
+    align-items:center;
+    gap:12px;
+    margin-bottom:36px;
+  }
+  @media (max-width:900px) { .login-mobile-brand { display:flex; } }
+  .login-mobile-brand .b {
+    width:44px;height:44px;border-radius:12px;
+    background:linear-gradient(135deg,#EA580C,#C2410C);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .login-mobile-brand .b i { color:#fff;font-size:18px; }
+  .login-mobile-brand .n { font-size:18px;font-weight:800;color:var(--c-text); }
+  .login-mobile-brand .s { font-size:12px;color:var(--c-text-2); }
+
+  .login-title { font-size:26px;font-weight:700;color:var(--c-text);margin-bottom:6px;letter-spacing:-.02em; }
+  .login-sub   { font-size:14px;color:var(--c-text-2);margin-bottom:32px; }
+
+  .input-wrap { margin-bottom:16px; }
+  .input-wrap label { display:block;font-size:12px;font-weight:600;color:var(--c-text-2);margin-bottom:6px; }
+  .input-wrap .ip { position:relative; }
+  .input-wrap input {
+    width:100%; padding:11px 14px 11px 40px;
+    border:1.5px solid var(--c-border);
+    border-radius:10px;
+    font-size:14px;
+    font-family:inherit;
+    background:#fff;
+    color:var(--c-text);
+    outline:none;
+    transition:all .15s;
+  }
+  [dir="rtl"] .input-wrap input { padding:11px 40px 11px 14px; }
+  .input-wrap input:focus { border-color:var(--c-primary); box-shadow:0 0 0 3px rgba(30,58,138,.1); }
+  .input-wrap input.error { border-color:var(--c-danger); box-shadow:0 0 0 3px rgba(220,38,38,.1); }
+  .input-wrap .ip i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--c-text-3); font-size:13px; pointer-events:none; }
+  [dir="rtl"] .input-wrap .ip i { left:auto; right:14px; }
+  .eye { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--c-text-3); padding:4px; }
+  [dir="rtl"] .eye { right:auto; left:10px; }
+  .eye:hover { color:var(--c-text); }
+
+  .remember { display:flex;align-items:center;gap:8px;margin-bottom:24px; }
+  .remember input { width:16px;height:16px;accent-color:var(--c-primary);cursor:pointer; }
+  .remember label { font-size:13px;color:var(--c-text-2);cursor:pointer; }
+
+  .btn-login {
+    width:100%;
+    padding:12px;
+    background:linear-gradient(135deg, var(--c-primary), var(--c-primary-2));
+    color:#fff;
+    font-weight:600;
+    font-size:14px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    box-shadow:0 4px 12px rgba(30,58,138,.3);
+    transition:all .2s;
+    font-family:inherit;
+  }
+  .btn-login:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 8px 20px rgba(30,58,138,.4); }
+  .btn-login:disabled { opacity:.7; cursor:not-allowed; transform:none; }
+  .btn-login.success { background:linear-gradient(135deg, #059669, #10B981); box-shadow:0 4px 12px rgba(5,150,105,.3); }
+
+  .err-msg {
+    display:none;
+    align-items:flex-start;
+    gap:8px;
+    padding:10px 14px;
+    background:var(--c-danger-bg);
+    border:1px solid #FECACA;
+    border-radius:10px;
+    color:var(--c-danger);
+    font-size:13px;
+    margin-top:12px;
+  }
+  .err-msg.show { display:flex; }
+  .help { margin-top:24px;text-align:center;font-size:12.5px;color:var(--c-text-3); }
+
+  @keyframes shake { 10%,90%{transform:translateX(-2px);}20%,80%{transform:translateX(4px);}30%,50%,70%{transform:translateX(-6px);}40%,60%{transform:translateX(6px);} }
+  .shake { animation:shake .4s; }
+</style>
 </head>
-<body class="theme-transition min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-    <!-- Dark Mode Toggle - Fixed Position -->
-    <div class="fixed top-4 right-4 z-50">
-        <button id="darkModeToggle" class="p-3 rounded-full bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700">
-            <svg id="sunIcon" class="w-6 h-6 text-gray-600 dark:text-gray-300 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-            </svg>
-            <svg id="moonIcon" class="w-6 h-6 text-gray-600 dark:text-gray-300 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-            </svg>
-        </button>
+<body>
+<div class="login-left">
+  <div class="grid-deco"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="brand-box">
+    <div class="brand-logo"><i class="fas fa-hard-hat"></i></div>
+    <h1 class="brand-name" data-i18n="app_name">ECH SAHARA</h1>
+    <p class="brand-tagline">Entreprise de Travaux de Construction Hydraulique et Génie Civil — gestion complète de projets, caisse et documents.</p>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-ico" style="background:rgba(234,88,12,.2);"><i class="fas fa-diagram-project" style="color:#FB923C;"></i></div>
+        <div><h4 data-i18n="nav_projects">Projets</h4><p>Suivi budgétaire & financier complet</p></div>
+      </div>
+      <div class="feature">
+        <div class="feature-ico" style="background:rgba(16,185,129,.2);"><i class="fas fa-cash-register" style="color:#34D399;"></i></div>
+        <div><h4 data-i18n="nav_caisse">Caisse</h4><p>Encaissements & décaissements en temps réel</p></div>
+      </div>
+      <div class="feature">
+        <div class="feature-ico" style="background:rgba(139,92,246,.2);"><i class="fas fa-file-pdf" style="color:#A78BFA;"></i></div>
+        <div><h4>Documents PDF</h4><p>BL, BC, ordres de mission, journaux</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="login-right">
+  <div class="lang-corner">
+    <div class="lang-pill">
+      <button class="active" data-lang-btn="fr" onclick="setLangLogin('fr')">FR</button>
+      <button data-lang-btn="ar" onclick="setLangLogin('ar')">ع</button>
+    </div>
+  </div>
+
+  <div class="login-card" id="loginCard">
+    <div class="login-mobile-brand">
+      <div class="b"><i class="fas fa-hard-hat"></i></div>
+      <div>
+        <div class="n">ECH SAHARA</div>
+        <div class="s" data-i18n="app_sub">ERP — Génie Civil</div>
+      </div>
     </div>
 
-    <div class="w-full max-w-md">
-        <!-- Logo Container -->
-        <div class="text-center mb-8 floating">
-            <div class="w-24 h-24 mx-auto mb-4 bg-orange-500 rounded-full flex items-center justify-center shadow-2xl">
-                <div class="text-white text-4xl font-bold">ECH</div>
-            </div>
-            <h1 class="text-gray-900 dark:text-white text-3xl font-bold mb-2">ECH SAHARA</h1>
-            <p class="text-gray-600 dark:text-gray-400 text-lg">Entreprise de Travaux de Construction Hydraulique et Genie Civil
-</p>
+    <h2 class="login-title" data-i18n="login_title">Connexion</h2>
+    <p class="login-sub" data-i18n="login_subtitle">Accédez à votre espace de travail</p>
+
+    <form id="loginForm" novalidate>
+      <div class="input-wrap">
+        <label data-i18n="login_username">Nom d'utilisateur</label>
+        <div class="ip">
+          <input type="text" id="username" autocomplete="username" required data-i18n-ph="login_username">
+          <i class="fas fa-user"></i>
         </div>
-
-        <!-- Login Form -->
-        <div class="login-card rounded-2xl p-8 shadow-2xl">
-            <div class="mb-6">
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white text-center mb-2">Connexion</h2>
-                <p class="text-gray-600 dark:text-gray-400 text-center">Accédez à votre espace de travail</p>
-            </div>
-
-            <form id="loginForm">
-                <div class="mb-6">
-                    <label for="username" class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
-                        Nom d'utilisateur
-                    </label>
-                    <input 
-                        type="text" 
-                        id="username" 
-                        name="username"
-                        required
-                        class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-                        placeholder="Entrez votre nom d'utilisateur"
-                    >
-                </div>
-
-                <div class="mb-6">
-                    <label for="password" class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
-                        Mot de passe
-                    </label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password"
-                        required
-                        class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-                        placeholder="Entrez votre mot de passe"
-                    >
-                </div>
-
-                <div class="mb-6">
-                    <div class="flex items-center">
-                        <input 
-                            type="checkbox" 
-                            id="remember" 
-                            class="w-4 h-4 text-orange-500 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-orange-500 focus:ring-2"
-                        >
-                        <label for="remember" class="ml-2 text-gray-700 dark:text-gray-300 text-sm">
-                            Se souvenir de moi
-                        </label>
-                    </div>
-                </div>
-
-                <button 
-                    type="submit" 
-                    id="loginBtn"
-                    class="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold py-3 px-6 rounded-lg transform transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-orange-300 shadow-lg"
-                >
-                    <span id="loginText">Se connecter</span>
-                    <span id="loadingText" class="hidden">Connexion...</span>
-                </button>
-            </form>
-
-            <!-- Error Message -->
-            <div id="errorMessage" class="hidden mt-4 p-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded-lg text-red-700 dark:text-red-300 text-sm"></div>
+      </div>
+      <div class="input-wrap">
+        <label data-i18n="login_password">Mot de passe</label>
+        <div class="ip">
+          <input type="password" id="password" autocomplete="current-password" required>
+          <i class="fas fa-lock"></i>
+          <button type="button" class="eye" onclick="toggleEye()"><i class="fas fa-eye" id="eyeIcon"></i></button>
         </div>
+      </div>
+      <div class="remember">
+        <input type="checkbox" id="remember">
+        <label for="remember" data-i18n="login_remember">Se souvenir de moi</label>
+      </div>
+      <button type="submit" class="btn-login" id="btnLogin">
+        <i class="fas fa-right-to-bracket" id="btnIcon"></i>
+        <span id="btnText" data-i18n="login_btn">Se connecter</span>
+      </button>
+    </form>
 
-        <div class="text-center mt-6">
-            <p class="text-gray-600 dark:text-gray-400 text-sm">
-                Problème de connexion? 
-                <a href="#" class="text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 font-medium transition-colors">Contactez l'administrateur</a>
-            </p>
-        </div>
+    <div class="err-msg" id="errMsg">
+      <i class="fas fa-circle-exclamation" style="flex-shrink:0;margin-top:2px;"></i>
+      <span id="errText"></span>
     </div>
 
-    <script>
-        // Dark Mode functionality
-        const darkModeToggle = document.getElementById('darkModeToggle');
-        const html = document.documentElement;
-        
-        // Check for saved theme preference or default to light mode
-        const currentTheme = localStorage.getItem('theme') || 'light';
-        if (currentTheme === 'dark') {
-            html.classList.add('dark');
-        }
-        
-        darkModeToggle.addEventListener('click', function() {
-            html.classList.toggle('dark');
-            
-            // Save theme preference
-            if (html.classList.contains('dark')) {
-                localStorage.setItem('theme', 'dark');
-            } else {
-                localStorage.setItem('theme', 'light');
-            }
-        });
-        
-        // API Configuration - Update this with your actual backend URL
-        const API_BASE_URL = 'https://backend.echsahra.com'; // Change this to your Django backend URL
-        
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const loginBtn = document.getElementById('loginBtn');
-            const loginText = document.getElementById('loginText');
-            const loadingText = document.getElementById('loadingText');
-            const errorMessage = document.getElementById('errorMessage');
-            
-            // Show loading state
-            loginBtn.disabled = true;
-            loginText.classList.add('hidden');
-            loadingText.classList.remove('hidden');
-            errorMessage.classList.add('hidden');
-            
-            try {
-                const response = await fetch(`${API_BASE_URL}/auth/login/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Store tokens
-                    localStorage.setItem('access_token', data.access);
-                    localStorage.setItem('refresh_token', data.refresh);
-                    localStorage.setItem('username', data.username);
-                    localStorage.setItem('user_groups', JSON.stringify(data.groups));
-                    
-                    // Success animation
-                    loginBtn.classList.remove('from-orange-500', 'to-red-500');
-                    loginBtn.classList.add('from-green-500', 'to-green-600');
-                    loadingText.textContent = 'Connexion réussie!';
-                    
-                    // Redirect to dashboard after short delay
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1500);
-                } else {
-                    throw new Error(data.detail || 'Ce Compte n\'est pas actif');
-                }
-            } catch (error) {
-                // Show error
-                errorMessage.textContent = error.message || 'Nom d\'utilisateur ou mot de passe incorrect';
-                errorMessage.classList.remove('hidden');
-                
-                // Reset button state
-                loginBtn.disabled = false;
-                loginText.classList.remove('hidden');
-                loadingText.classList.add('hidden');
-                loadingText.textContent = 'Connexion...';
-                loginBtn.classList.remove('from-green-500', 'to-green-600');
-                loginBtn.classList.add('from-orange-500', 'to-red-500');
-            }
-        });
-        
-        // Check if user is already logged in
-        document.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('access_token');
-            if (token) {
-                // Optionally verify token is still valid
-                window.location.href = 'dashboard.html';
-            }
-        });
-    </script>
-    
+    <p class="help" data-i18n="login_help">Problème ? Contactez l'administrateur.</p>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script>
+  if (localStorage.getItem('access_token')) location.href = 'dashboard.html';
+  I18n.init();
+
+  function setLangLogin(l) { I18n.setLang(l); }
+
+  function toggleEye() {
+    const p = document.getElementById('password');
+    const i = document.getElementById('eyeIcon');
+    if (p.type === 'password') { p.type='text'; i.className='fas fa-eye-slash'; }
+    else { p.type='password'; i.className='fas fa-eye'; }
+  }
+
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn  = document.getElementById('btnLogin');
+    const txt  = document.getElementById('btnText');
+    const ico  = document.getElementById('btnIcon');
+    const err  = document.getElementById('errMsg');
+    const errT = document.getElementById('errText');
+    const card = document.getElementById('loginCard');
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value;
+
+    if (!u || !p) return;
+    err.classList.remove('show');
+    btn.disabled = true;
+    ico.className = 'fas fa-spinner fa-spin';
+    txt.textContent = I18n.t('login_loading');
+
+    try {
+      const res = await fetch(CFG.API + CFG.R.LOGIN, {
+        method: 'POST',
+        headers: {
+          'Content-Type':'application/json',
+          'Accept-Language': I18n.lang,
+          'X-User-Lang': I18n.lang
+        },
+        body: JSON.stringify({username:u, password:p})
+      });
+      const d = await res.json();
+      if (res.ok) {
+        Auth.save(d);
+        btn.classList.add('success');
+        ico.className = 'fas fa-check';
+        txt.textContent = I18n.t('login_success');
+        setTimeout(() => location.href = 'dashboard.html', 800);
+      } else {
+        const msg = (d.detail||'').toLowerCase().includes('active') ? I18n.t('login_err_inactive') : I18n.t('login_err_invalid');
+        errT.textContent = msg;
+        err.classList.add('show');
+        card.classList.add('shake');
+        setTimeout(()=>card.classList.remove('shake'), 400);
+        btn.disabled = false;
+        ico.className = 'fas fa-right-to-bracket';
+        txt.textContent = I18n.t('login_btn');
+      }
+    } catch {
+      errT.textContent = I18n.t('login_err_network');
+      err.classList.add('show');
+      btn.disabled = false;
+      ico.className = 'fas fa-right-to-bracket';
+      txt.textContent = I18n.t('login_btn');
+    }
+  });
+</script>
 </body>
 </html>

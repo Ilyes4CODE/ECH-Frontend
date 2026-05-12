@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-i18n-title="caisse_title">Caisse — ECH SAHARA ERP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar"></aside>
+  <div class="main">
+    <header class="topbar"></header>
+    <div class="content">
+      <div class="page-head">
+        <div>
+          <h2 data-i18n="caisse_title">Caisse</h2>
+          <p class="sub" data-i18n="caisse_subtitle">Suivi des opérations & solde</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-ghost" onclick="downloadExportPDF()"><i class="fas fa-file-pdf"></i> <span data-i18n="btn_export">Exporter</span></button>
+          <button class="btn btn-primary" onclick="showEncaissement()"><i class="fas fa-plus"></i> <span data-i18n="caisse_new_op">Nouvelle opération</span></button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-row">
+            <div><div class="stat-label" data-i18n="caisse_balance">Solde actuel</div><div class="stat-value" id="s-bal">—</div></div>
+            <div class="stat-icon primary"><i class="fas fa-wallet"></i></div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="stat-row">
+            <div><div class="stat-label" data-i18n="caisse_encaissements">Encaissements</div><div class="stat-value text-success" id="s-enc">—</div></div>
+            <div class="stat-icon success"><i class="fas fa-arrow-down"></i></div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="stat-row">
+            <div><div class="stat-label" data-i18n="caisse_decaissements">Décaissements</div><div class="stat-value text-danger" id="s-dec">—</div></div>
+            <div class="stat-icon danger"><i class="fas fa-arrow-up"></i></div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="stat-row">
+            <div><div class="stat-label" data-i18n="caisse_op_count">Opérations</div><div class="stat-value" id="s-count">—</div></div>
+            <div class="stat-icon info"><i class="fas fa-list"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3><i class="fas fa-filter" style="color:var(--c-text-3);font-size:12px;margin-right:6px;"></i> <span data-i18n="caisse_filters">Filtres</span></h3>
+        </div>
+        <div class="card-body">
+          <div class="filter-bar">
+            <div class="input-icon" style="flex:1;min-width:200px;max-width:280px;">
+              <i class="fas fa-search"></i>
+              <input class="input" id="f-search" data-i18n-ph="caisse_search">
+            </div>
+            <select class="select" id="f-type" style="width:160px;">
+              <option value="" data-i18n="lbl_all">Tous</option>
+              <option value="encaissement" data-i18n="caisse_encaissement">Encaissement</option>
+              <option value="decaissement" data-i18n="caisse_decaissement">Décaissement</option>
+            </select>
+            <select class="select" id="f-mode" style="width:160px;">
+              <option value="" data-i18n="caisse_mode">Mode</option>
+              <option value="especes" data-i18n="caisse_mode_especes">Espèces</option>
+              <option value="cheque" data-i18n="caisse_mode_cheque">Chèque</option>
+              <option value="virement" data-i18n="caisse_mode_virement">Virement</option>
+            </select>
+            <input type="date" class="input" id="f-from" data-i18n-ph="caisse_date_from" style="width:160px;">
+            <input type="date" class="input" id="f-to" data-i18n-ph="caisse_date_to" style="width:160px;">
+            <button class="btn btn-primary btn-sm" onclick="applyFilters()"><i class="fas fa-check"></i> <span data-i18n="btn_apply">Appliquer</span></button>
+            <button class="btn btn-ghost btn-sm" onclick="resetFilters()"><i class="fas fa-rotate-left"></i> <span data-i18n="btn_clear">Effacer</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="table-scroll">
+          <table class="table">
+            <thead><tr>
+              <th data-i18n="caisse_numero">N°</th>
+              <th data-i18n="lbl_date">Date</th>
+              <th data-i18n="lbl_type">Type</th>
+              <th data-i18n="lbl_amount">Montant</th>
+              <th data-i18n="caisse_balance_after">Solde après</th>
+              <th data-i18n="caisse_mode">Mode</th>
+              <th data-i18n="lbl_project">Projet</th>
+              <th data-i18n="lbl_description">Description</th>
+              <th data-i18n="lbl_actions">Actions</th>
+            </tr></thead>
+            <tbody id="opsBody">
+              <tr><td colspan="9"><div class="loader-wrap"><div class="loader"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="paginationBox"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/ui.js"></script>
+<script>
+let projects = [];
+let currentPage = 1;
+const pageSize = 20;
+let totalCount = 0;
+let filters = {};
+let opsCache = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!UI.init('nav_caisse','caisse_title')) return;
+  I18n.init();
+  projects = await Auth.get(CFG.R.PROJECTS).catch(() => []);
+  await Promise.all([loadStatus(), loadOps(1)]);
+});
+
+async function loadStatus() {
+  try {
+    const s = await Auth.get(CFG.R.CAISSE_STATUS);
+    document.getElementById('s-bal').textContent = UI.fmtAmount(s.total_amount);
+  } catch(e) { console.error(e); }
+}
+
+async function loadOps(page = 1) {
+  currentPage = page;
+  const tb = document.getElementById('opsBody');
+  tb.innerHTML = `<tr><td colspan="9"><div class="loader-wrap"><div class="loader"></div></div></td></tr>`;
+
+  const qp = new URLSearchParams({page, page_size: pageSize, ordering: '-created_at'});
+  if (filters.search) qp.set('search', filters.search);
+  if (filters.action) qp.set('action', filters.action);
+  if (filters.mode_paiement) qp.set('mode_paiement', filters.mode_paiement);
+  if (filters.date_from) qp.set('date_from', filters.date_from);
+  if (filters.date_to)   qp.set('date_to', filters.date_to);
+
+  try {
+    const d = await Auth.get(CFG.R.CAISSE_HISTORY + '?' + qp.toString());
+    const ops = d.results || d || [];
+    totalCount = d.count ?? ops.length;
+    opsCache = ops;
+    renderOps(ops);
+    renderTotals(ops);
+  } catch(e) {
+    tb.innerHTML = UI.emptyRow(9, 'fa-circle-exclamation', 'err_load');
+  }
+}
+
+function renderOps(ops) {
+  const tb = document.getElementById('opsBody');
+  if (!ops.length) { tb.innerHTML = UI.emptyRow(9, 'fa-receipt'); return; }
+  tb.innerHTML = ops.map(o => {
+    const isEnc = o.action === 'encaissement';
+    const op = o.operation || {};
+    return `<tr>
+      <td><span class="fw-600">${o.numero || '—'}</span></td>
+      <td style="color:var(--c-text-2);">${UI.fmtDate(o.date || o.created_at)}</td>
+      <td><span class="badge ${isEnc?'success':'danger'}">
+        <i class="fas fa-arrow-${isEnc?'down':'up'}"></i>
+        ${isEnc?I18n.t('caisse_encaissement'):I18n.t('caisse_decaissement')}
+      </span></td>
+      <td class="fw-600 ${isEnc?'text-success':'text-danger'}">${UI.fmtAmount(o.amount)}</td>
+      <td>${UI.fmtAmount(o.balance_after)}</td>
+      <td><span class="badge muted">${op.mode_paiement || '—'}</span></td>
+      <td>${o.project?.name || '—'}</td>
+      <td style="color:var(--c-text-2);font-size:12.5px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeAttr(o.description||'')}">${o.description||'—'}</td>
+      <td><div class="table-actions">
+        <button class="btn btn-ghost btn-sm" onclick="downloadOpPDF(${o.id})" title="${I18n.t('btn_pdf')}"><i class="fas fa-file-pdf text-danger"></i></button>
+        ${Auth.isAdmin() ? `
+          <button class="btn btn-ghost btn-sm" onclick="editOp(${o.id})" title="${I18n.t('btn_edit')}"><i class="fas fa-pen text-primary"></i></button>
+          <button class="btn btn-ghost btn-sm" onclick="delOp(${o.id})" title="${I18n.t('btn_delete')}"><i class="fas fa-trash text-danger"></i></button>
+        ` : ''}
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  // Pagination
+  const pg = UI.pagination({count: totalCount, page: currentPage, pageSize, onPage: loadOps});
+  document.getElementById('paginationBox').innerHTML = pg.html;
+  pg.attach(document.getElementById('paginationBox'));
+}
+
+function renderTotals(ops) {
+  const enc = ops.filter(o=>o.action==='encaissement').reduce((s,o)=>s+parseFloat(o.amount||0), 0);
+  const dec = ops.filter(o=>o.action==='decaissement').reduce((s,o)=>s+parseFloat(o.amount||0), 0);
+  document.getElementById('s-enc').textContent   = UI.fmtAmount(enc);
+  document.getElementById('s-dec').textContent   = UI.fmtAmount(dec);
+  document.getElementById('s-count').textContent = totalCount;
+}
+
+function applyFilters() {
+  filters = {
+    search: document.getElementById('f-search').value.trim(),
+    action: document.getElementById('f-type').value,
+    mode_paiement: document.getElementById('f-mode').value,
+    date_from: document.getElementById('f-from').value,
+    date_to:   document.getElementById('f-to').value,
+  };
+  loadOps(1);
+}
+
+function resetFilters() {
+  ['f-search','f-type','f-mode','f-from','f-to'].forEach(id => document.getElementById(id).value = '');
+  filters = {};
+  loadOps(1);
+}
+
+async function downloadOpPDF(id) {
+  try { await Auth.download(CFG.R.OP_PDF(id)); }
+  catch { UI.err(I18n.t('err_load')); }
+}
+
+// ── Admin: edit an existing operation ──────────────────────────────────────
+async function editOp(historyId) {
+  const o = opsCache.find(x => x.id === historyId);
+  if (!o) { UI.err(I18n.t('err_not_found')); return; }
+  if (o.action === 'balance_adjustment') {
+    UI.warn('Cette entrée n\'est pas modifiable.');
+    return;
+  }
+  const op = o.operation || {};
+  const projOpts = projects.map(p => `<option value="${p.id}" ${o.project?.id===p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+  const isEnc = o.action === 'encaissement';
+  const isDec = o.action === 'decaissement';
+  const curDate = (o.date || '').slice(0,10);
+  const curMode = op.mode_paiement || 'especes';
+
+  const data = await UI.formModal({
+    titleKey: 'btn_edit', width: 560,
+    html: `<div class="swal-form">
+      <div style="background:var(--c-warning-bg);color:var(--c-warning);padding:10px 12px;border-radius:8px;margin-bottom:14px;font-size:12.5px;display:flex;gap:8px;align-items:flex-start;">
+        <i class="fas fa-triangle-exclamation" style="margin-top:2px;"></i>
+        <div>Modifier cette opération va recalculer automatiquement le solde de caisse${isDec?' et les totaux du projet':''}.</div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('lbl_type')}</label>
+          <input class="input" value="${isEnc?I18n.t('caisse_encaissement'):I18n.t('caisse_decaissement')}" disabled style="opacity:.7;"></div>
+        <div class="field"><label class="label">${I18n.t('lbl_date')} <span class="req">*</span></label>
+          <input class="input" type="date" name="date" required value="${curDate}"></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('enc_amount')} <span class="req">*</span></label>
+          <input class="input" type="number" name="amount" min="0.01" step="0.01" required value="${o.amount}"></div>
+        <div class="field"><label class="label">${I18n.t('caisse_mode')}</label>
+          <select class="select" name="mode_paiement" onchange="toggleEditPay(this.value)">
+            <option value="especes" ${curMode==='especes'?'selected':''}>${I18n.t('caisse_mode_especes')}</option>
+            <option value="cheque"  ${curMode==='cheque' ?'selected':''}>${I18n.t('caisse_mode_cheque')}</option>
+            <option value="virement" ${curMode==='virement'?'selected':''}>${I18n.t('caisse_mode_virement')}</option>
+          </select></div>
+      </div>
+      ${isDec ? `<div class="field"><label class="label">${I18n.t('lbl_project')} <span class="req">*</span></label>
+        <select class="select" name="project_id" required>${projOpts}</select></div>` : ''}
+      <div class="form-row cols-2" id="edit-pay-extra" style="display:${curMode==='especes'?'none':'grid'};">
+        <div class="field"><label class="label">${I18n.t('caisse_fournisseur')}</label>
+          <input class="input" name="nom_fournisseur" value="${escapeAttr(op.nom_fournisseur||'')}"></div>
+        <div class="field"><label class="label" id="edit-bank-lbl">${curMode==='cheque'?I18n.t('caisse_cheque'):I18n.t('caisse_banque')}</label>
+          <input class="input" name="bank_ref" value="${escapeAttr(curMode==='cheque'?(op.numero_cheque||''):(op.banque||''))}"></div>
+      </div>
+      <div class="field"><label class="label">${I18n.t('lbl_description')}</label>
+        <textarea class="textarea" name="description" rows="2">${escapeHtml(o.description||'')}</textarea></div>
+    </div>`,
+    preConfirm: (d) => {
+      const body = {
+        amount: parseFloat(d.amount),
+        date: d.date,
+        description: d.description || '',
+        mode_paiement: d.mode_paiement,
+        nom_fournisseur: d.nom_fournisseur || null,
+        numero_cheque: d.mode_paiement==='cheque' ? (d.bank_ref || null) : null,
+        banque: d.mode_paiement==='virement' ? (d.bank_ref || null) : null,
+      };
+      if (isDec) body.project_id = parseInt(d.project_id);
+      return body;
+    }
+  });
+  if (!data) return;
+  const res = await Auth.put(CFG.R.OP_UPDATE(historyId), data);
+  if (res?.ok) {
+    let okMsg = I18n.lang === 'ar'
+      ? 'تم تحديث العملية. أُعيد حساب الرصيد.'
+      : 'Opération mise à jour. Solde recalculé.';
+    try { const body = await res.json(); if (body.message) okMsg = body.message; } catch {}
+    UI.ok(okMsg);
+    await Promise.all([loadStatus(), loadOps(currentPage)]);
+  } else {
+    await UI.apiErr(res);
+  }
+}
+
+function toggleEditPay(mode) {
+  const w = document.getElementById('edit-pay-extra');
+  if (w) w.style.display = mode === 'especes' ? 'none' : 'grid';
+  const lbl = document.getElementById('edit-bank-lbl');
+  if (lbl) lbl.textContent = mode === 'cheque' ? I18n.t('caisse_cheque') : I18n.t('caisse_banque');
+}
+
+// ── Admin: delete an operation ─────────────────────────────────────────────
+async function delOp(historyId) {
+  const o = opsCache.find(x => x.id === historyId);
+  if (!o) { UI.err(I18n.t('err_not_found')); return; }
+  const amountStr = UI.fmtAmount(o.amount);
+  const typeLbl = o.action === 'encaissement' ? I18n.t('caisse_encaissement') : I18n.t('caisse_decaissement');
+  const ok = await Swal.fire({
+    title: I18n.t('cf_delete_title'),
+    html: `<div style="text-align:left;font-size:13.5px;line-height:1.7;">
+      Vous êtes sur le point de supprimer cette opération:<br>
+      <strong>${typeLbl}</strong> &middot; <strong>${amountStr}</strong> &middot; ${UI.fmtDate(o.date)}<br><br>
+      <span style="color:var(--c-danger);">Le solde de caisse sera automatiquement recalculé.</span>
+    </div>`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: I18n.t('cf_yes_delete'),
+    cancelButtonText: I18n.t('cf_no'),
+    confirmButtonColor: '#DC2626',
+    reverseButtons: I18n.lang === 'ar'
+  });
+  if (!ok.isConfirmed) return;
+  const res = await Auth.del(CFG.R.OP_DELETE(historyId));
+  if (res?.ok) {
+    let okMsg = I18n.lang === 'ar'
+      ? 'تم حذف العملية. أُعيد حساب الرصيد.'
+      : 'Opération supprimée. Solde recalculé.';
+    try { const body = await res.json(); if (body.message) okMsg = body.message; } catch {}
+    UI.ok(okMsg);
+    await Promise.all([loadStatus(), loadOps(currentPage)]);
+  } else {
+    await UI.apiErr(res);
+  }
+}
+
+async function downloadExportPDF() {
+  const qp = new URLSearchParams();
+  if (filters.action) qp.set('action', filters.action);
+  if (filters.mode_paiement) qp.set('mode_paiement', filters.mode_paiement);
+  if (filters.date_from) qp.set('date_from', filters.date_from);
+  if (filters.date_to)   qp.set('date_to', filters.date_to);
+  if (filters.search)    qp.set('search', filters.search);
+  try { await Auth.download(CFG.R.CAISSE_PDF + (qp.toString()?'?'+qp.toString():'')); }
+  catch { UI.err(I18n.t('err_load')); }
+}
+
+function escapeAttr(s) { return (s||'').replace(/"/g,'&quot;'); }
+function escapeHtml(s) { return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function payFieldsHTML(prefix) {
+  return `<div class="form-row cols-2" id="${prefix}-pay-extra" style="display:none;">
+    <div class="field"><label class="label">${I18n.t('caisse_fournisseur')}</label><input class="input" name="nom_fournisseur"></div>
+    <div class="field"><label class="label" id="${prefix}-pay-lbl">${I18n.t('caisse_cheque')}</label><input class="input" name="bank_ref"></div>
+  </div>`;
+}
+
+async function showEncaissement() {
+  const projOpts = projects.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  const data = await UI.formModal({
+    titleKey:'caisse_new_op', width:560,
+    html: `<div class="swal-form">
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('lbl_type')} <span class="req">*</span></label>
+          <select class="select" name="op_type" id="op_type" onchange="toggleOpType(this.value)">
+            <option value="encaissement">${I18n.t('caisse_encaissement')}</option>
+            <option value="decaissement">${I18n.t('caisse_decaissement')}</option>
+          </select></div>
+        <div class="field"><label class="label">${I18n.t('lbl_date')} <span class="req">*</span></label>
+          <input class="input" type="date" name="date" required value="${new Date().toISOString().slice(0,10)}"></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('enc_amount')} <span class="req">*</span></label>
+          <input class="input" type="number" name="amount" min="0.01" step="0.01" required></div>
+        <div class="field"><label class="label">${I18n.t('caisse_mode')}</label>
+          <select class="select" name="mode_paiement" onchange="togglePayMode(this.value,'enc')">
+            <option value="especes">${I18n.t('caisse_mode_especes')}</option>
+            <option value="cheque">${I18n.t('caisse_mode_cheque')}</option>
+            <option value="virement">${I18n.t('caisse_mode_virement')}</option>
+          </select></div>
+      </div>
+      <div id="src-block">
+        <div class="field"><label class="label">${I18n.t('enc_source')}</label>
+          <select class="select" name="income_source" onchange="toggleSrc(this.value)">
+            <option value="projet">${I18n.t('caisse_source_projet')}</option>
+            <option value="dette">${I18n.t('caisse_source_dette')}</option>
+            <option value="collaborator">${I18n.t('caisse_source_collab')}</option>
+            <option value="autre">${I18n.t('caisse_source_autre')}</option>
+          </select></div>
+      </div>
+      <div class="field" id="proj-f"><label class="label">${I18n.t('lbl_project')}</label>
+        <select class="select" name="project_id"><option value="">—</option>${projOpts}</select></div>
+      <div class="field" id="creditor-f" style="display:none;"><label class="label">${I18n.t('enc_creditor')}</label>
+        <input class="input" name="creditor_name"></div>
+      <div class="field" id="obs-f" style="display:none;"><label class="label">${I18n.t('caisse_observation')}</label>
+        <textarea class="textarea" name="observation" rows="2"></textarea></div>
+      ${payFieldsHTML('enc')}
+      <div class="field"><label class="label">${I18n.t('lbl_description')}</label>
+        <textarea class="textarea" name="description" rows="2"></textarea></div>
+    </div>`,
+    preConfirm: (d, popup) => {
+      const isEnc = d.op_type === 'encaissement';
+      const body = {
+        amount: parseFloat(d.amount),
+        date: d.date,
+        description: d.description||'',
+        mode_paiement: d.mode_paiement
+      };
+      if (d.nom_fournisseur) body.nom_fournisseur = d.nom_fournisseur;
+      if (d.mode_paiement==='cheque') body.numero_cheque = d.bank_ref;
+      if (d.mode_paiement==='virement') body.banque = d.bank_ref;
+      if (isEnc) {
+        body.income_source = d.income_source;
+        if (d.project_id) body.project_id = parseInt(d.project_id);
+        if (d.creditor_name) body.creditor_name = d.creditor_name;
+        if (d.observation) body.observation = d.observation;
+      } else {
+        if (!d.project_id) { Swal.showValidationMessage(I18n.t('err_required')); return false; }
+        body.project_id = parseInt(d.project_id);
+      }
+      body._isEnc = isEnc;
+      return body;
+    }
+  });
+  if (!data) return;
+  const isEnc = data._isEnc;
+  delete data._isEnc;
+  const r = await Auth.post(isEnc ? CFG.R.ENCAISSEMENT : CFG.R.DECAISSEMENT, data);
+  if (r?.ok) { UI.ok(I18n.t(isEnc?'enc_success':'dec_success')); await Promise.all([loadStatus(), loadOps(1)]); }
+  else await UI.apiErr(r);
+}
+
+function toggleOpType(t) {
+  document.getElementById('src-block').style.display = t==='encaissement' ? '' : 'none';
+  document.getElementById('proj-f').style.display    = '';
+  document.getElementById('creditor-f').style.display = 'none';
+  document.getElementById('obs-f').style.display      = 'none';
+  if (t==='decaissement') {
+    document.querySelector('[name="project_id"]').required = true;
+  } else {
+    document.querySelector('[name="project_id"]').required = false;
+  }
+}
+function toggleSrc(v) {
+  document.getElementById('proj-f').style.display     = (v==='projet'||v==='collaborator') ? '' : 'none';
+  document.getElementById('creditor-f').style.display = v==='dette' ? '' : 'none';
+  document.getElementById('obs-f').style.display      = v==='autre' ? '' : 'none';
+}
+function togglePayMode(m, prefix) {
+  const w = document.getElementById(`${prefix}-pay-extra`);
+  if (w) w.style.display = m==='especes' ? 'none' : 'grid';
+  const l = document.getElementById(`${prefix}-pay-lbl`);
+  if (l) l.textContent = m==='cheque' ? I18n.t('caisse_cheque') : I18n.t('caisse_banque');
+}
+</script>
+</body>
+</html>
