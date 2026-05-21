@@ -118,10 +118,11 @@
   [dir="rtl"] .input-wrap input { padding:11px 40px 11px 14px; }
   .input-wrap input:focus { border-color:var(--c-primary); box-shadow:0 0 0 3px rgba(30,58,138,.1); }
   .input-wrap input.error { border-color:var(--c-danger); box-shadow:0 0 0 3px rgba(220,38,38,.1); }
-  .input-wrap .ip i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--c-text-3); font-size:13px; pointer-events:none; }
-  [dir="rtl"] .input-wrap .ip i { left:auto; right:14px; }
-  .eye { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--c-text-3); padding:4px; }
-  [dir="rtl"] .eye { right:auto; left:10px; }
+  .input-wrap .ip > i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--c-text-3); font-size:13px; pointer-events:none; }
+  [dir="rtl"] .input-wrap .ip > i { left:auto; right:14px; }
+  .eye { position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--c-text-3); padding:6px; display:flex; align-items:center; justify-content:center; z-index:2; }
+  [dir="rtl"] .eye { right:auto; left:8px; }
+  .eye i { font-size:14px; }
   .eye:hover { color:var(--c-text); }
 
   .remember { display:flex;align-items:center;gap:8px;margin-bottom:24px; }
@@ -223,7 +224,7 @@
       <div class="input-wrap">
         <label data-i18n="login_password">Mot de passe</label>
         <div class="ip">
-          <input type="password" id="password" autocomplete="current-password" required>
+          <input type="password" id="password" autocomplete="current-password" required style="padding-right:42px;">
           <i class="fas fa-lock"></i>
           <button type="button" class="eye" onclick="toggleEye()"><i class="fas fa-eye" id="eyeIcon"></i></button>
         </div>
