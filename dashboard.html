@@ -71,7 +71,14 @@
         <div class="stat featured">
           <div class="stat-row">
             <div>
-              <div class="stat-label" data-i18n="dash_caisse">Solde de caisse</div>
+              <div class="stat-label" style="display:flex;align-items:center;gap:8px;">
+                <span data-i18n="dash_caisse">Solde de caisse</span>
+                <button id="toggleCaisse" onclick="toggleCaisseVisibility()" title="Masquer / Afficher"
+                  style="background:rgba(255,255,255,.12);border:none;color:#fff;width:22px;height:22px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s;padding:0;"
+                  onmouseover="this.style.background='rgba(255,255,255,.2)'" onmouseout="this.style.background='rgba(255,255,255,.12)'">
+                  <i class="fas fa-eye" id="toggleCaisseIcon" style="font-size:11px;"></i>
+                </button>
+              </div>
               <div class="stat-value" id="s-caisse">—</div>
               <div class="stat-sub" id="s-caisse-date"></div>
             </div>
@@ -172,17 +179,39 @@
 <script src="js/ui.js"></script>
 <script>
 let projects = [];
+let caisseValueRaw = null;  // real balance for show/hide toggle
+let caisseHidden = localStorage.getItem('caisseHidden') === '1';
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!UI.init('nav_dashboard','dash_title')) return;
   I18n.init();
+  applyCaisseVisibility();  // restore last state for icon
   await Promise.all([loadStats(), loadProjects(), loadRecentOps()]);
 });
+
+function toggleCaisseVisibility() {
+  caisseHidden = !caisseHidden;
+  localStorage.setItem('caisseHidden', caisseHidden ? '1' : '0');
+  applyCaisseVisibility();
+}
+
+function applyCaisseVisibility() {
+  const el  = document.getElementById('s-caisse');
+  const ico = document.getElementById('toggleCaisseIcon');
+  if (caisseHidden) {
+    if (el) el.textContent = '••••••• DA';
+    if (ico) ico.className = 'fas fa-eye-slash';
+  } else {
+    if (el) el.textContent = caisseValueRaw != null ? UI.fmtAmount(caisseValueRaw) : '—';
+    if (ico) ico.className = 'fas fa-eye';
+  }
+}
 
 async function loadStats() {
   try {
     const d = await Auth.get(CFG.R.DASHBOARD);
-    document.getElementById('s-caisse').textContent    = UI.fmtAmount(d.caisse_balance);
+    caisseValueRaw = d.caisse_balance;
+    applyCaisseVisibility();
     document.getElementById('s-projects').textContent  = d.total_projects ?? '—';
     document.getElementById('s-dettes').textContent    = d.active_dettes ?? '—';
     document.getElementById('s-benefices').textContent = UI.fmtAmount(d.total_benefices);
@@ -309,43 +338,52 @@ async function showEncaissement() {
 }
 
 async function showDecaissement() {
-  if (!projects.length) {
-    UI.warn(I18n.t('dash_no_projects'));
-    return;
-  }
   const projOpts = projects.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
   const data = await UI.formModal({
     titleKey:'dec_title', width:520,
     html: `<div class="swal-form">
-      <div class="field"><label class="label">${I18n.t('dec_project')} <span class="req">*</span></label>
-        <select class="select" name="project_id" required><option value="">—</option>${projOpts}</select></div>
+      <div class="field"><label class="label">${I18n.t('dec_kind')||'Type de dépense'} <span class="req">*</span></label>
+        <select class="select" name="kind" id="dec-kind" onchange="toggleDecKind(this.value)">
+          <option value="project">${I18n.t('dec_kind_project')||'Dépense de projet'}</option>
+          <option value="depense">${I18n.t('dec_kind_depense')||'Dépense générale'}</option>
+        </select></div>
+      <div class="field" id="dec-project-f"><label class="label">${I18n.t('dec_project')} <span class="req">*</span></label>
+        <select class="select" name="project_id"><option value="">—</option>${projOpts}</select></div>
       <div class="form-row cols-2">
         <div class="field"><label class="label">${I18n.t('enc_amount')} <span class="req">*</span></label>
           <input class="input" type="number" name="amount" min="0.01" step="0.01" required></div>
         <div class="field"><label class="label">${I18n.t('lbl_date')} <span class="req">*</span></label>
           <input class="input" type="date" name="date" required value="${new Date().toISOString().slice(0,10)}"></div>
       </div>
-      <div class="field"><label class="label">${I18n.t('caisse_mode')}</label>
-        <select class="select" name="mode_paiement" onchange="togglePay(this.value,'enc')">
-          <option value="especes">${I18n.t('caisse_mode_especes')}</option>
-          <option value="cheque">${I18n.t('caisse_mode_cheque')}</option>
-          <option value="virement">${I18n.t('caisse_mode_virement')}</option>
-        </select></div>
+      <div class="form-row cols-2">
+        <div class="field"><label class="label">${I18n.t('enc_creditor')||'Bénéficiaire'}</label>
+          <input class="input" name="nom_fournisseur" placeholder="Nom du bénéficiaire..."></div>
+        <div class="field"><label class="label">${I18n.t('caisse_mode')}</label>
+          <select class="select" name="mode_paiement" onchange="togglePay(this.value,'enc')">
+            <option value="especes">${I18n.t('caisse_mode_especes')}</option>
+            <option value="cheque">${I18n.t('caisse_mode_cheque')}</option>
+            <option value="virement">${I18n.t('caisse_mode_virement')}</option>
+          </select></div>
+      </div>
       ${payFieldsHTML('enc')}
-      <div class="field"><label class="label">${I18n.t('lbl_description')}</label>
-        <textarea class="textarea" name="description" rows="2"></textarea></div>
+      <div class="field"><label class="label">${I18n.t('lbl_description')||'Motif'}</label>
+        <textarea class="textarea" name="description" rows="2" placeholder="Motif de la dépense..."></textarea></div>
     </div>`,
     preConfirm: (d) => {
+      if (d.kind === 'project' && !d.project_id) {
+        Swal.showValidationMessage(I18n.t('err_required'));
+        return false;
+      }
       const body = {
-        project_id: parseInt(d.project_id),
         amount: parseFloat(d.amount),
         date: d.date,
-        description: d.description||'',
+        description: d.description || '',
         mode_paiement: d.mode_paiement
       };
+      if (d.kind === 'project') body.project_id = parseInt(d.project_id);
       if (d.nom_fournisseur) body.nom_fournisseur = d.nom_fournisseur;
-      if (d.mode_paiement==='cheque') body.numero_cheque = d.bank_ref;
-      if (d.mode_paiement==='virement') body.banque = d.bank_ref;
+      if (d.mode_paiement === 'cheque')   body.numero_cheque = d.bank_ref;
+      if (d.mode_paiement === 'virement') body.banque = d.bank_ref;
       return body;
     }
   });
@@ -353,6 +391,11 @@ async function showDecaissement() {
   const r = await Auth.post(CFG.R.DECAISSEMENT, data);
   if (r?.ok) { UI.ok(I18n.t('dec_success')); await Promise.all([loadStats(), loadRecentOps()]); }
   else await UI.apiErr(r);
+}
+
+function toggleDecKind(kind) {
+  const f = document.getElementById('dec-project-f');
+  if (f) f.style.display = kind === 'project' ? '' : 'none';
 }
 
 function toggleEncSrc(v) {

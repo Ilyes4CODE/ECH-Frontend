@@ -93,12 +93,14 @@
               <th data-i18n="lbl_amount">Montant</th>
               <th data-i18n="caisse_balance_after">Solde après</th>
               <th data-i18n="caisse_mode">Mode</th>
+              <th data-i18n="caisse_fournisseur">Bénéficiaire</th>
               <th data-i18n="lbl_project">Projet</th>
+              <th>Par</th>
               <th data-i18n="lbl_description">Description</th>
               <th data-i18n="lbl_actions">Actions</th>
             </tr></thead>
             <tbody id="opsBody">
-              <tr><td colspan="9"><div class="loader-wrap"><div class="loader"></div></div></td></tr>
+              <tr><td colspan="11"><div class="loader-wrap"><div class="loader"></div></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -137,7 +139,7 @@ async function loadStatus() {
 async function loadOps(page = 1) {
   currentPage = page;
   const tb = document.getElementById('opsBody');
-  tb.innerHTML = `<tr><td colspan="9"><div class="loader-wrap"><div class="loader"></div></div></td></tr>`;
+  tb.innerHTML = `<tr><td colspan="11"><div class="loader-wrap"><div class="loader"></div></div></td></tr>`;
 
   const qp = new URLSearchParams({page, page_size: pageSize, ordering: '-created_at'});
   if (filters.search) qp.set('search', filters.search);
@@ -154,16 +156,30 @@ async function loadOps(page = 1) {
     renderOps(ops);
     renderTotals(ops);
   } catch(e) {
-    tb.innerHTML = UI.emptyRow(9, 'fa-circle-exclamation', 'err_load');
+    tb.innerHTML = UI.emptyRow(11, 'fa-circle-exclamation', 'err_load');
   }
 }
 
 function renderOps(ops) {
   const tb = document.getElementById('opsBody');
-  if (!ops.length) { tb.innerHTML = UI.emptyRow(9, 'fa-receipt'); return; }
+  if (!ops.length) { tb.innerHTML = UI.emptyRow(11, 'fa-receipt'); return; }
   tb.innerHTML = ops.map(o => {
     const isEnc = o.action === 'encaissement';
     const op = o.operation || {};
+    // User display
+    const userName = o.user
+      ? ((o.user.first_name || o.user.last_name)
+          ? `${o.user.first_name||''} ${o.user.last_name||''}`.trim()
+          : o.user.username)
+      : '—';
+    // Modified indicator
+    const wasModified = op.last_modified_by && op.last_modified_at;
+    const userCell = wasModified
+      ? `<div style="font-weight:500;">${escapeHtml(userName)}</div>
+         <div style="font-size:10.5px;color:var(--c-warning);font-weight:500;margin-top:2px;" title="Modifié le ${UI.fmtDateTime(op.last_modified_at)}">
+           <i class="fas fa-pen"></i> ${escapeHtml(op.last_modified_by.full_name)}
+         </div>`
+      : `<div>${escapeHtml(userName)}</div>`;
     return `<tr>
       <td><span class="fw-600">${o.numero || '—'}</span></td>
       <td style="color:var(--c-text-2);">${UI.fmtDate(o.date || o.created_at)}</td>
@@ -174,7 +190,9 @@ function renderOps(ops) {
       <td class="fw-600 ${isEnc?'text-success':'text-danger'}">${UI.fmtAmount(o.amount)}</td>
       <td>${UI.fmtAmount(o.balance_after)}</td>
       <td><span class="badge muted">${op.mode_paiement || '—'}</span></td>
-      <td>${o.project?.name || '—'}</td>
+      <td style="font-weight:500;">${escapeHtml(op.nom_fournisseur || '—')}</td>
+      <td>${escapeHtml(o.project?.name || '—')}</td>
+      <td style="font-size:12.5px;">${userCell}</td>
       <td style="color:var(--c-text-2);font-size:12.5px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeAttr(o.description||'')}">${o.description||'—'}</td>
       <td><div class="table-actions">
         <button class="btn btn-ghost btn-sm" onclick="downloadOpPDF(${o.id})" title="${I18n.t('btn_pdf')}"><i class="fas fa-file-pdf text-danger"></i></button>
@@ -260,8 +278,8 @@ async function editOp(historyId) {
             <option value="virement" ${curMode==='virement'?'selected':''}>${I18n.t('caisse_mode_virement')}</option>
           </select></div>
       </div>
-      ${isDec ? `<div class="field"><label class="label">${I18n.t('lbl_project')} <span class="req">*</span></label>
-        <select class="select" name="project_id" required>${projOpts}</select></div>` : ''}
+      ${isDec ? `<div class="field"><label class="label">${I18n.t('lbl_project')} <span style="color:var(--c-text-3);font-weight:400;font-size:11px;">(vide = dépense générale)</span></label>
+        <select class="select" name="project_id"><option value="">— Dépense générale —</option>${projOpts}</select></div>` : ''}
       <div class="form-row cols-2" id="edit-pay-extra" style="display:${curMode==='especes'?'none':'grid'};">
         <div class="field"><label class="label">${I18n.t('caisse_fournisseur')}</label>
           <input class="input" name="nom_fournisseur" value="${escapeAttr(op.nom_fournisseur||'')}"></div>
@@ -281,7 +299,10 @@ async function editOp(historyId) {
         numero_cheque: d.mode_paiement==='cheque' ? (d.bank_ref || null) : null,
         banque: d.mode_paiement==='virement' ? (d.bank_ref || null) : null,
       };
-      if (isDec) body.project_id = parseInt(d.project_id);
+      if (isDec) {
+        // Send project_id explicitly; empty string = clear → general dépense
+        body.project_id = d.project_id ? parseInt(d.project_id) : null;
+      }
       return body;
     }
   });
@@ -355,10 +376,16 @@ function escapeAttr(s) { return (s||'').replace(/"/g,'&quot;'); }
 function escapeHtml(s) { return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function payFieldsHTML(prefix) {
-  return `<div class="form-row cols-2" id="${prefix}-pay-extra" style="display:none;">
-    <div class="field"><label class="label">${I18n.t('caisse_fournisseur')}</label><input class="input" name="nom_fournisseur"></div>
-    <div class="field"><label class="label" id="${prefix}-pay-lbl">${I18n.t('caisse_cheque')}</label><input class="input" name="bank_ref"></div>
-  </div>`;
+  // Beneficiary is ALWAYS visible — it's needed for cash too (DEPENSES slip)
+  return `
+    <div class="field">
+      <label class="label">${I18n.t('caisse_fournisseur')||'Bénéficiaire'}</label>
+      <input class="input" name="nom_fournisseur" placeholder="Nom du bénéficiaire ou fournisseur...">
+    </div>
+    <div class="field" id="${prefix}-pay-extra" style="display:none;">
+      <label class="label" id="${prefix}-pay-lbl">${I18n.t('caisse_cheque')}</label>
+      <input class="input" name="bank_ref">
+    </div>`;
 }
 
 async function showEncaissement() {
@@ -394,6 +421,14 @@ async function showEncaissement() {
             <option value="autre">${I18n.t('caisse_source_autre')}</option>
           </select></div>
       </div>
+      <!-- Dec kind selector (only shown for décaissement) -->
+      <div id="dec-kind-block" style="display:none;">
+        <div class="field"><label class="label">Type de dépense <span class="req">*</span></label>
+          <select class="select" name="dec_kind" onchange="toggleDecKind(this.value)">
+            <option value="project">Dépense de projet</option>
+            <option value="depense">Dépense générale</option>
+          </select></div>
+      </div>
       <div class="field" id="proj-f"><label class="label">${I18n.t('lbl_project')}</label>
         <select class="select" name="project_id"><option value="">—</option>${projOpts}</select></div>
       <div class="field" id="creditor-f" style="display:none;"><label class="label">${I18n.t('enc_creditor')}</label>
@@ -421,8 +456,11 @@ async function showEncaissement() {
         if (d.creditor_name) body.creditor_name = d.creditor_name;
         if (d.observation) body.observation = d.observation;
       } else {
-        if (!d.project_id) { Swal.showValidationMessage(I18n.t('err_required')); return false; }
-        body.project_id = parseInt(d.project_id);
+        // Décaissement: project optional when kind=depense, required otherwise
+        if (d.dec_kind === 'project') {
+          if (!d.project_id) { Swal.showValidationMessage(I18n.t('err_required')); return false; }
+          body.project_id = parseInt(d.project_id);
+        }
       }
       body._isEnc = isEnc;
       return body;
@@ -437,15 +475,20 @@ async function showEncaissement() {
 }
 
 function toggleOpType(t) {
-  document.getElementById('src-block').style.display = t==='encaissement' ? '' : 'none';
-  document.getElementById('proj-f').style.display    = '';
-  document.getElementById('creditor-f').style.display = 'none';
-  document.getElementById('obs-f').style.display      = 'none';
-  if (t==='decaissement') {
-    document.querySelector('[name="project_id"]').required = true;
-  } else {
-    document.querySelector('[name="project_id"]').required = false;
-  }
+  const isEnc = t === 'encaissement';
+  document.getElementById('src-block').style.display      = isEnc ? '' : 'none';
+  document.getElementById('dec-kind-block').style.display = isEnc ? 'none' : '';
+  document.getElementById('proj-f').style.display         = '';
+  document.getElementById('creditor-f').style.display     = 'none';
+  document.getElementById('obs-f').style.display          = 'none';
+  // For decaissement default kind is "project" so project select stays visible
+  const proj = document.querySelector('[name="project_id"]');
+  if (proj) proj.required = !isEnc;  // required only when kind=project (default)
+}
+function toggleDecKind(kind) {
+  const proj = document.querySelector('[name="project_id"]');
+  document.getElementById('proj-f').style.display = kind === 'project' ? '' : 'none';
+  if (proj) proj.required = kind === 'project';
 }
 function toggleSrc(v) {
   document.getElementById('proj-f').style.display     = (v==='projet'||v==='collaborator') ? '' : 'none';
