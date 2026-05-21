@@ -1,6 +1,6 @@
 /** ECH SAHARA ERP — Config */
 const CFG = {
-  API: 'http://localhost:8000',
+  API: 'https://backend.echsahra.com',
   R: {
     LOGIN:          '/auth/login/',
     REFRESH:        '/auth/refresh/',
